@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Interview Prep</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:#0a0a0a;color:#e0e0e0;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.tabbar{display:flex;align-items:stretch;background:#111;border-bottom:1px solid #1f1f1f;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.tabbar::-webkit-scrollbar{display:none}
+.tab{display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:12px;cursor:pointer;white-space:nowrap;color:#555;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;user-select:none;flex-shrink:0}
+.tab:hover{color:#aaa;background:#161616}
+.tab.active{color:#fff;border-bottom-color:#fff}
+.tab .tc{font-size:10px;color:#444}
+.tab.active .tc{color:#666}
+.pwrap{height:2px;background:#1a1a1a;flex-shrink:0}
+#pf{height:100%;width:0%;background:#fff;transition:width .4s}
+.stage{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:28px 20px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#1f1f1f #0a0a0a}
+.stage::-webkit-scrollbar{width:6px}
+.stage::-webkit-scrollbar-track{background:#0a0a0a}
+.stage::-webkit-scrollbar-thumb{background:#1f1f1f;border-radius:3px}
+.card-wrap{width:100%;max-width:700px}
+.card{background:#111;border:1px solid #1f1f1f;border-radius:12px;overflow:hidden}
+.card-meta{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0}
+.card-tag{font-size:11px;color:#555;text-transform:uppercase;letter-spacing:.8px}
+.card-num{font-size:11px;color:#444}
+.card-title{padding:8px 18px 0;font-size:17px;font-weight:600;color:#f0f0f0;line-height:1.4}
+.card-q{padding:8px 18px 16px;font-size:13px;color:#777;line-height:1.75;white-space:pre-wrap}
+.loci-box{margin:0 18px 12px;padding:8px 12px;background:#0a1a0a;border:1px solid #1a3a1a;border-radius:6px;font-size:11px;color:#3fb950}
+.hint-box{margin:0 18px 12px;padding:10px 14px;background:#161208;border:1px solid #2a2008;border-radius:8px;font-size:12px;color:#c9a227;line-height:1.6}
+.ans-section{padding:0 18px 16px;border-top:1px solid #1a1a1a}
+.ans-text{font-size:13px;color:#b0b0b0;line-height:1.8;white-space:pre-wrap;padding:14px 0 12px}
+.code-block{background:#1e1e1e;border-radius:8px;overflow:hidden;border:1px solid #2d2d2d;margin-bottom:4px}
+.code-hdr{background:#2d2d2d;padding:6px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #3a3a3a}
+.code-lang{background:#3c3c3c;color:#ccc;padding:2px 8px;border-radius:3px;font-size:9px;font-family:'Fira Code',monospace;letter-spacing:.5px}
+.code-copy{background:transparent;border:none;color:#666;cursor:pointer;font-size:11px;padding:2px 6px;border-radius:3px;font-family:inherit;transition:all .15s}
+.code-copy:hover{color:#aaa;background:#3c3c3c}
+.code-body{display:flex;overflow-x:auto}
+.line-nums{background:#1e1e1e;padding:12px 8px 12px 10px;text-align:right;color:#404040;font-size:11px;line-height:1.75;min-width:36px;border-right:1px solid #2d2d2d;font-family:'Fira Code',monospace;user-select:none;flex-shrink:0;white-space:pre}
+.code-pre{padding:12px 14px;font-family:'Fira Code',monospace;font-size:11px;line-height:1.75;flex:1;color:#d4d4d4;margin:0;white-space:pre}
+.kw{color:#c586c0}.ty{color:#4ec9b0}.fn{color:#dcdcaa}.st{color:#ce9178}.cm{color:#6a9955;font-style:italic}.nu{color:#b5cea8}
+.card-foot{display:flex;align-items:center;gap:7px;padding:12px 18px;border-top:1px solid #1a1a1a;flex-wrap:wrap}
+.btn{padding:6px 14px;border-radius:7px;border:1px solid;font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap}
+.btn-hint{background:transparent;border-color:#2a2a2a;color:#666}
+.btn-hint:hover{border-color:#444;color:#aaa}
+.btn-reveal{background:#fff;border-color:#fff;color:#000;font-weight:600}
+.btn-got{background:transparent;border-color:#1a3a1a;color:#3fb950}
+.btn-got:hover{background:#0d2a0d;border-color:#238636}
+.btn-rev{background:transparent;border-color:#3a1a1a;color:#f85149}
+.btn-rev:hover{background:#2a0d0d;border-color:#b91c1c}
+.btn-nav{background:transparent;border-color:#222;color:#555}
+.btn-nav:hover{border-color:#444;color:#aaa}
+#bn{margin-left:auto}
+.statsbar{display:flex;align-items:center;gap:16px;padding:7px 20px;background:#0d0d0d;border-top:1px solid #1a1a1a;flex-shrink:0;font-size:11px;color:#444}
+.s-known{color:#3fb950}.s-rev{color:#f85149}
+.kbds{margin-left:auto;display:flex;align-items:center;gap:5px;color:#383838}
+kbd{background:#1a1a1a;border:1px solid #2a2a2a;border-radius:3px;padding:1px 5px;font-size:10px;font-family:'Fira Code',monospace;color:#555}
+</style>
+</head>
+<body>
+<div class="tabbar" id="tb"></div>
+<div class="pwrap"><div id="pf"></div></div>
+<div class="stage">
+  <div class="card-wrap">
+    <div class="card">
+      <div class="card-meta">
+        <span id="ct" class="card-tag"></span>
+        <span id="cn" class="card-num"></span>
+      </div>
+      <div id="ctitle" class="card-title"></div>
+      <div id="cq" class="card-q"></div>
+      <div id="loci" class="loci-box" style="display:none"></div>
+      <div id="hint" class="hint-box" style="display:none"></div>
+      <div id="ans" class="ans-section" style="display:none">
+        <div id="at" class="ans-text"></div>
+        <div id="cd" class="code-block" style="display:none">
+          <div class="code-hdr">
+            <span id="clang" class="code-lang"></span>
+            <button class="code-copy" onclick="copyCode()">⎘ copy</button>
+          </div>
+          <div class="code-body">
+            <div id="clns" class="line-nums"></div>
+            <pre id="cp" class="code-pre"></pre>
+          </div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button id="bh" class="btn btn-hint" onclick="showHint()">💡 Hint</button>
+        <button id="br" class="btn btn-reveal" onclick="reveal()">Reveal ↓</button>
+        <button id="bg" class="btn btn-got" style="display:none" onclick="markGot()">✓ Got it</button>
+        <button id="bv" class="btn btn-rev" style="display:none" onclick="markRev()">↩ Review</button>
+        <button id="bp" class="btn btn-nav" onclick="prev()">← Prev</button>
+        <button id="bn" class="btn btn-nav" onclick="next()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="statsbar">
+  <span id="ks" class="s-known"></span>
+  <span id="rs" class="s-rev"></span>
+  <div class="kbds">
+    <kbd>space</kbd>reveal &nbsp;
+    <kbd>g</kbd>got it &nbsp;
+    <kbd>r</kbd>review &nbsp;
+    <kbd>h</kbd>hint &nbsp;
+    <kbd>←→</kbd>nav &nbsp;
+    <kbd>1-7</kbd>topic
+  </div>
+</div>
+<script>
+const TOPICS=[];
+let ti=0,ci=0,revealed=false;
+const gs=id=>localStorage.getItem('c_'+id)||'new';
+const ss=(id,s)=>localStorage.setItem('c_'+id,s);
+const all=()=>TOPICS.flatMap(t=>t.cards);
+const known=()=>all().filter(c=>gs(c.id)==='known').length;
+const reviewed=()=>all().filter(c=>gs(c.id)==='review').length;
+
+function renderTabs(){
+  document.getElementById('tb').innerHTML=TOPICS.map((t,i)=>{
+    const k=t.cards.filter(c=>gs(c.id)==='known').length;
+    return`<div class="tab${i===ti?' active':''}" onclick="selT(${i})">${t.icon} ${t.name} <span class="tc">${k}/${t.cards.length}</span></div>`;
+  }).join('');
+}
+
+function updP(){
+  const t=all().length,k=known();
+  document.getElementById('pf').style.width=(t?Math.round(k/t*100):0)+'%';
+  document.getElementById('ks').textContent=k+' / '+t+' known';
+  document.getElementById('rs').textContent=reviewed()+' to review';
+  renderTabs();
+}
+
+function renderCard(){
+  const topic=TOPICS[ti],card=topic.cards[ci];
+  revealed=false;
+  document.getElementById('ct').textContent=topic.icon+' '+topic.name;
+  document.getElementById('cn').textContent=(ci+1)+' / '+topic.cards.length;
+  document.getElementById('ctitle').textContent=card.title;
+  document.getElementById('cq').textContent=card.q;
+  const lb=document.getElementById('loci');
+  if(card.loci){lb.textContent='🏛 '+card.loci;lb.style.display='block';}else lb.style.display='none';
+  document.getElementById('hint').style.display='none';
+  document.getElementById('ans').style.display='none';
+  document.getElementById('cd').style.display='none';
+  document.getElementById('br').style.display='';
+  document.getElementById('bg').style.display='none';
+  document.getElementById('bv').style.display='none';
+  updP();
+  document.querySelector('.stage').scrollTop=0;
+}
+
+function reveal(){
+  if(revealed)return;revealed=true;
+  const card=TOPICS[ti].cards[ci];
+  document.getElementById('at').textContent=card.answer;
+  document.getElementById('ans').style.display='block';
+  if(card.code){
+    document.getElementById('clang').textContent=detectLang(card.code);
+    const lines=card.code.split('\n');
+    document.getElementById('clns').textContent=lines.map((_,i)=>i+1).join('\n');
+    document.getElementById('cp').innerHTML=highlight(card.code);
+    document.getElementById('cd').style.display='block';
+  }
+  document.getElementById('br').style.display='none';
+  document.getElementById('bg').style.display='';
+  document.getElementById('bv').style.display='';
+}
+
+function showHint(){
+  const h=document.getElementById('hint');
+  h.textContent='💡 '+TOPICS[ti].cards[ci].hint;
+  h.style.display='block';
+}
+
+function selT(i){ti=i;ci=0;renderCard();}
+function next(){if(ci<TOPICS[ti].cards.length-1){ci++;renderCard();}}
+function prev(){if(ci>0){ci--;renderCard();}}
+function markGot(){ss(TOPICS[ti].cards[ci].id,'known');updP();next();}
+function markRev(){ss(TOPICS[ti].cards[ci].id,'review');updP();next();}
+
+function copyCode(){
+  navigator.clipboard.writeText(TOPICS[ti].cards[ci].code).then(()=>{
+    const b=document.querySelector('.code-copy');
+    b.textContent='✓ copied';
+    setTimeout(()=>b.textContent='⎘ copy',1500);
+  });
+}
+
+function detectLang(code){
+  if(/#include|std::|cout|nullptr|vector</.test(code))return'C++';
+  if(/public\s+class|import\s+java|ArrayList|HashMap/.test(code))return'Java';
+  if(/\bdef\s+\w+\s*\(/.test(code))return'Python';
+  if(/\bfunc\s+\w+/.test(code))return'Go';
+  if(/const\s+\w+=|let\s+\w+=|=>/.test(code))return'JS';
+  return'Code';
+}
+
+function highlight(code){
+  const saved=[];
+  const save=html=>{saved.push(html);return'\x00'+(saved.length-1)+'\x00';};
+  let s=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  s=s.replace(/(\/\/[^\n]*)/g,m=>save('<span class="cm">'+m+'</span>'));
+  s=s.replace(/(\/\*[\s\S]*?\*\/)/g,m=>save('<span class="cm">'+m+'</span>'));
+  s=s.replace(/("(?:[^"\\]|\\.)*")/g,m=>save('<span class="st">'+m+'</span>'));
+  s=s.replace(/('(?:[^'\\]|\\.)*')/g,m=>save('<span class="st">'+m+'</span>'));
+  const kws='if|else|return|while|for|break|continue|switch|case|default|new|this|super|null|nullptr|true|false|void|int|long|double|float|bool|char|var|let|const|auto|static|final|abstract|class|interface|enum|struct|public|private|protected|extends|implements|override|virtual|typename|import|package|def';
+  s=s.replace(new RegExp('\\b('+kws+')\\b','g'),'<span class="kw">$1</span>');
+  s=s.replace(/\b([a-z_][a-zA-Z0-9_]*)(?=\s*\()/g,'<span class="fn">$1</span>');
+  s=s.replace(/\b([A-Z][a-zA-Z0-9_]*)\b/g,'<span class="ty">$1</span>');
+  s=s.replace(/\b(\d+(?:\.\d+)?)\b/g,'<span class="nu">$1</span>');
+  s=s.replace(/\x00(\d+)\x00/g,(_,i)=>saved[+i]);
+  return s;
+}
+
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();reveal();}
+  else if(e.key==='ArrowRight')next();
+  else if(e.key==='ArrowLeft')prev();
+  else if(e.key==='g')markGot();
+  else if(e.key==='r')markRev();
+  else if(e.key==='h')showHint();
+  else if(e.key>='1'&&e.key<='9'){const i=parseInt(e.key)-1;if(i<TOPICS.length)selT(i);}
+});
+
+function addTopic(t){TOPICS.push(t);if(TOPICS.length===1){renderTabs();renderCard();}else renderTabs();}
+</script>
+<!-- CARD DATA injected below -->
+<script>
+addTopic({id:'str',icon:'📝',name:'String Algorithms',color:'#58a6ff',cards:[
+{id:'s01',title:'1. Reverse a String / Words',
+q:'Reverse words in "  hello   world  " → "world hello".\nWhat is the in-place O(1) space trick?',
+hint:'Reverse whole string → reverse each word → words are now in correct order',
+answer:'In-place (reverse whole, then reverse parts):\n1. reverse entire string → "dlrow   olleh"\n2. reverse each word individually → "world   hello"\n3. clean up extra spaces\n\nAlternative: split on spaces, push to deque front, join.\n\nKey: two-step "global reverse makes order right, local reverse fixes each word".',
+code:'// In-place reverse words\nstring reverseWordsInPlace(string s) {\n    reverse(s.begin(), s.end());\n    int n=s.size(), start=0;\n    for(int i=0;i<=n;i++){\n        if(i==n||s[i]==\' \'){\n            reverse(s.begin()+start,s.begin()+i);\n            start=i+1;\n        }\n    }\n    return s;\n}',loci:'🚪 FRONT DOOR — push it and it spins 180° back at you (reverse whole, then parts)'},
+{id:'s02',title:'2. Palindrome Check',
+q:'Check if a string is a palindrome ignoring non-alphanumeric chars.\nWhat is the two-pointer approach?',
+hint:'Two pointers from both ends; skip non-alnum; compare lowercased chars',
+answer:'Two pointers: l=0, r=len-1\n  while l < r:\n    skip non-alphanumeric from both sides\n    if tolower(s[l]) != tolower(s[r]): return false\n    l++; r--\n  return true\n\nDo NOT use reverse + compare — that is O(n) extra space.\n\nVariant: check if palindrome after deleting at most 1 char\n  → try skipping s[l] OR s[r] when mismatch; recurse.',
+code:'bool isPalin(string& s, int l, int r){\n    while(l<r){\n        while(l<r&&!isalnum(s[l]))l++;\n        while(l<r&&!isalnum(s[r]))r--;\n        if(tolower(s[l])!=tolower(s[r]))return false;\n        l++;r--;\n    }\n    return true;\n}',loci:'🪤 WELCOME MAT — reads MADAM from both ends; ants crawl inward and must agree'},
+{id:'s03',title:'3. Longest Palindromic Substring',
+q:'Find the longest palindromic substring in O(n²).\nWhat is the "expand around center" technique?',
+hint:'For each center (n odd-centers + n-1 even-centers), expand while chars match',
+answer:'For each of 2n-1 centers (single char + between chars):\n  expand left and right while s[l]==s[r]\n  track max length and start index\n\nO(n²) time, O(1) space. Simple to implement.\n\nManacher\'s algorithm: O(n) but complex — rarely needed in interviews.\n\nDon\'t use DP unless explicitly asked — expand-around-center is cleaner.',
+code:'int lo=0, maxLen=1;\nvoid expand(string& s, int l, int r){\n    while(l>=0&&r<s.size()&&s[l]==s[r]){l--;r++;}\n    if(r-l-1>maxLen){maxLen=r-l-1;lo=l+1;}\n}\nfor(int i=0;i<n;i++){\n    expand(s,i,i);   // odd\n    expand(s,i,i+1); // even\n}',loci:'🪞 HALLWAY MIRROR — stand at each tile and stretch arms; widest wingspan = longest palindrome center'},
+{id:'s04',title:'4. Anagram / Group Anagrams',
+q:'How do you check if two strings are anagrams?\nHow do you group a list of strings by anagram class?',
+hint:'Sort key: sorted(word) is the same for all anagrams in a group',
+answer:'Check two strings: sort both and compare, or use frequency array.\n  freq[s[i]-\'a\']++; freq[t[i]-\'a\']--; check all zeros.\n\nGroup anagrams:\n  Map<String, List<String>> map\n  key = sorted characters of each word\n  group all words with the same key\n\nO(n·k log k) where k = max word length.',
+code:'Map<String,List<String>> map=new HashMap<>();\nfor(String w: words){\n    char[] a=w.toCharArray(); Arrays.sort(a);\n    String key=new String(a);\n    map.computeIfAbsent(key,k->new ArrayList<>()).add(w);\n}\nreturn new ArrayList<>(map.values());',loci:'🧥 COAT RACK — jumbled coats sorted alphabetically; same sort key = anagram'},
+{id:'s05',title:'5. String Compression',
+q:'Compress "aabbb" → "a2b3". If compressed is not shorter, return original.\nWhat is the one-pass approach?',
+hint:'Count consecutive runs; append char + count (skip count if 1)',
+answer:'Walk through string counting consecutive character runs.\n  if s[i] != s[i-1]: append previous char + count, reset count\n  at end: append final char + count\n\nOnly return compressed if len(compressed) < len(original).\n\nIn-place (if allowed): two-pointer write head + read head.',
+code:'string compress(string s){\n    string res;\n    int i=0,n=s.size();\n    while(i<n){\n        char c=s[i]; int cnt=0;\n        while(i<n&&s[i]==c){cnt++;i++;}\n        res+=c;\n        if(cnt>1)res+=to_string(cnt);\n    }\n    return res.size()<s.size()?res:s;\n}',loci:'🪜 STAIRCASE — giant hand squeezes stairs together counting each run: aabbb → a2b3'},
+{id:'s06',title:'6. First Non-Repeating Character',
+q:'Find the first character in a string that appears exactly once.\nHow do you do it in two passes?',
+hint:'Pass 1: build frequency map. Pass 2: return first char with freq==1.',
+answer:'Pass 1: count frequency of each character\n  → Map<char, int> or int[26] for lowercase\n\nPass 2: iterate string IN ORDER (preserves position)\n  → return first char where freq == 1\n\nImportant: iterate original string in pass 2, NOT the map\n  (maps don\'t preserve insertion order for freq lookups).\n\nStream version: use LinkedHashMap to track insertion order.',
+code:'Map<Character,Integer> freq=new LinkedHashMap<>();\nfor(char c:s.toCharArray()) freq.merge(c,1,Integer::sum);\nfor(char c:s.toCharArray()) if(freq.get(c)==1) return c;\nreturn \'\\0\';',loci:'💡 LIGHT SWITCH — flipped twice=useless; flipped once=the one you want. Two-pass: count then find.'},
+{id:'s07',title:'7. Longest Common Prefix',
+q:'Find the longest common prefix among an array of strings.\nWhat is the vertical scan approach?',
+hint:'Take first string as reference; shrink it while any string does not start with it',
+answer:'Vertical scan: compare character by character across all strings.\n  for each position i in strs[0]:\n    for each string s in strs:\n      if i >= s.length() or s[i] != strs[0][i]: return strs[0][0..i-1]\n\nOr: start with strs[0] as prefix, shrink using startsWith:\n  while (!s.startsWith(prefix)): prefix = prefix[0..n-2]\n\nEdge cases: empty array, one string, no common prefix.',
+code:'String lcp(String[] strs){\n    String pre=strs[0];\n    for(String s:strs)\n        while(!s.startsWith(pre))\n            pre=pre.substring(0,pre.length()-1);\n    return pre;\n}',loci:'🛋️ LIVING ROOM SOFA — family proposes Wi-Fi password; keep trimming until everyone agrees'},
+{id:'s08',title:'8. atoi — String to Integer',
+q:'Implement atoi. What are the 4 steps in order?\nHow do you handle overflow?',
+hint:'SKIP spaces → READ sign → READ digits → CLAMP to INT range',
+answer:'4 steps in strict order:\n1. Skip leading whitespace\n2. Read optional sign (+/-)\n3. Read digits, accumulate: result = result*10 + digit\n4. Clamp: if result > INT_MAX return INT_MAX; if < INT_MIN return INT_MIN\n\nOverflow check BEFORE multiplying:\n  if result > (INT_MAX - digit) / 10: clamp immediately\n  Use long to hold intermediate result.',
+code:'int myAtoi(string s){\n    int i=0,n=s.size(),sign=1;\n    long res=0;\n    while(i<n&&s[i]==\' \')i++;\n    if(i<n&&(s[i]==\'+'||s[i]==\'-\'))sign=(s[i++]==\'+\')?1:-1;\n    while(i<n&&isdigit(s[i])){\n        res=res*10+(s[i++]-\'0\');\n        if(res*sign>INT_MAX)return INT_MAX;\n        if(res*sign<INT_MIN)return INT_MIN;\n    }\n    return (int)(res*sign);\n}',loci:'📺 TV REMOTE — 4 buttons in order: SKIP·SIGN·DIGITS·STOP'},
+{id:'s09',title:'9. Valid Parentheses',
+q:'Check if a string of brackets is valid.\nWhat goes on the stack? When do you pop?',
+hint:'Push opening brackets. On closing bracket: stack must be non-empty and top must match.',
+answer:'Push: \'(\', \'[\', \'{\' → push onto stack\nPop: \')\', \']\', \'}\' → stack must be non-empty AND top must be matching open\n  if stack empty or top doesn\'t match: return false\n  else: pop\n\nAt end: stack must be empty (no unclosed brackets).\n\nVariant — minimum removals to make valid:\n  count unmatched open and close brackets separately.',
+code:'boolean isValid(String s){\n    Deque<Character> st=new ArrayDeque<>();\n    for(char c:s.toCharArray()){\n        if("([{".indexOf(c)>=0) st.push(c);\n        else{\n            if(st.isEmpty()) return false;\n            char top=st.pop();\n            if(c==\')\' &&top!=\'(\') return false;\n            if(c==\']\' &&top!=\'[\') return false;\n            if(c==\'}\' &&top!=\'{\') return false;\n        }\n    }\n    return st.isEmpty();\n}',loci:'🚪 KITCHEN DOOR — every door that OPENS must CLOSE; unmatched ) = slammed shut with nothing open'},
+{id:'s10',title:'10. KMP — Pattern Search',
+q:'KMP avoids re-scanning characters. What is the LPS array?\nHow do you use it during matching?',
+hint:'LPS[i] = length of longest proper prefix of pattern[0..i] that is also a suffix',
+answer:'LPS (Failure function) build:\n  lps[0]=0; i=1, len=0\n  if pattern[i]==pattern[len]: lps[i++]=++len\n  else if len>0: len=lps[len-1]  (key: don\'t reset i!)\n  else: lps[i++]=0\n\nSearch:\n  mismatch at pattern[j]?\n    if j>0: j=lps[j-1]  (jump back using LPS)\n    else: advance text pointer\n  match: advance both; if j==m: found!\n\nO(n+m) total. Never re-reads a text character.',
+code:'int[] buildLPS(String p){\n    int m=p.length(); int[] lps=new int[m];\n    int len=0,i=1;\n    while(i<m){\n        if(p.charAt(i)==p.charAt(len)) lps[i++]=++len;\n        else if(len>0) len=lps[len-1];\n        else lps[i++]=0;\n    }\n    return lps;\n}',loci:'🍳 KITCHEN STOVE — chef follows recipe; burns a step? LPS tells exactly how far back to restart'},
+{id:'s11',title:'11. Rabin-Karp — Rolling Hash',
+q:'How does Rabin-Karp search in O(n+m) average?\nWhat is the rolling hash formula?',
+hint:'Hash the pattern. Slide a window: remove leftmost char hash, add rightmost char hash.',
+answer:'Rolling hash:\n  hash = s[0]*B^(m-1) + s[1]*B^(m-2) + ... + s[m-1]*B^0\n  slide right: hash = (hash - s[i]*B^(m-1)) * B + s[i+m]\n\nOn hash match: VERIFY character by character (avoid false positives).\n\nB=31 (lowercase), MOD=1e9+7\nO(n+m) average. O(nm) worst case (many hash collisions).\nUse for: find all anagrams, substring search, multiple pattern search.',
+code:'long hashPat=0, hashWin=0, pow=1;\nfor(int i=0;i<m;i++){\n    hashPat=(hashPat*B+pat[i])%MOD;\n    hashWin=(hashWin*B+txt[i])%MOD;\n    if(i>0) pow=pow*B%MOD;\n}\nfor(int i=0;i<=n-m;i++){\n    if(hashWin==hashPat && txt.substr(i,m)==pat) /* found */;\n    if(i<n-m) hashWin=((hashWin-txt[i]*pow%MOD+MOD)*B+txt[i+m])%MOD;\n}',loci:'🧊 REFRIGERATOR — fingerprint scanner on every shelf; compare fingerprints of same-size trays'},
+{id:'s12',title:'12. Z-Algorithm',
+q:'What does Z[i] represent? How is it computed?\nWhat is it useful for?',
+hint:'Z[i] = length of longest substring starting at i that matches a prefix of the string',
+answer:'Z[i] = length of longest substring starting at s[i] that matches s[0..Z[i]-1]\nZ[0] = n (by convention, the whole string)\n\nBuilding Z:\n  maintain Z-box [l,r] where s[l..r] = s[0..r-l]\n  if i < r: Z[i] = min(Z[i-l], r-i+1) then expand\n  else: expand from scratch\n\nUse: pattern search (P + \'$\' + T, find i in Z where Z[i]==|P|),\n  count distinct substrings, string periodicity.',
+code:'vector<int> zFunc(string s){\n    int n=s.size(); vector<int> z(n);\n    int l=0,r=0;\n    for(int i=1;i<n;i++){\n        if(i<r) z[i]=min(z[i-l],r-i+1);\n        while(i+z[i]<n&&s[z[i]]==s[i+z[i]])z[i]++;\n        if(i+z[i]-1>r){l=i;r=i+z[i]-1;}\n    }\n    return z;\n}',loci:'🪟 KITCHEN WINDOW — frame shaped like Z; Z[i] = how much of the view matches the street\'s start'},
+{id:'s13',title:'13. Minimum Window Substring',
+q:'Find the smallest window in S containing all chars of T.\nWhat is the two-pointer / sliding window approach?',
+hint:'Expand right to include all T chars. Then shrink left to minimize. Record window at each valid state.',
+answer:'Maintain:\n  need = freq map of T\n  have = how many T chars are currently satisfied in window\n  formed = count of chars where window freq >= need freq\n\nExpand right: add s[r] to window, update formed\nWhen formed == T distinct chars:\n  record min window\n  shrink left: remove s[l] from window, update formed\n  keep shrinking while still valid\n\nO(n) time.',
+code:'Map<Character,Integer> need=new HashMap<>(),win=new HashMap<>();\nfor(char c:t.toCharArray()) need.merge(c,1,Integer::sum);\nint have=0,formed=need.size(),l=0,minLen=INT_MAX,minL=0;\nfor(int r=0;r<s.length();r++){\n    char c=s.charAt(r); win.merge(c,1,Integer::sum);\n    if(need.containsKey(c)&&win.get(c).equals(need.get(c)))have++;\n    while(have==formed){\n        if(r-l+1<minLen){minLen=r-l+1;minL=l;}\n        char lc=s.charAt(l++); win.merge(lc,-1,Integer::sum);\n        if(need.containsKey(lc)&&win.get(lc)<need.get(lc))have--;\n    }\n}',loci:'🚰 KITCHEN SINK — turn tap RIGHT to fill (expand); when full turn LEFT to drain to minimum (shrink)'},
+{id:'s14',title:'14. Longest Substring Without Repeat',
+q:'Find the longest substring with all unique characters.\nWhy do you JUMP the left pointer instead of moving it by 1?',
+hint:'On duplicate: jump l to max(l, lastSeen[c]+1) — skip past the previous occurrence',
+answer:'Map each character to its last seen index.\nWhen s[r] is a duplicate:\n  l = max(l, lastSeen[s[r]] + 1)   ← jump past the duplicate\n  (max ensures l never moves backward)\nUpdate lastSeen[s[r]] = r\nAnswer: max(r - l + 1)\n\nJumping is O(n) total. Moving by 1 each time is also correct\nbut slower for large windows with widely-spaced duplicates.',
+code:'Map<Character,Integer> last=new HashMap<>();\nint l=0,maxLen=0;\nfor(int r=0;r<s.length();r++){\n    if(last.containsKey(s.charAt(r)))\n        l=Math.max(l,last.get(s.charAt(r))+1);\n    last.put(s.charAt(r),r);\n    maxLen=Math.max(maxLen,r-l+1);\n}',loci:'🔪 CUTTING BOARD — slide knife across veggies; hit a duplicate carrot? JUMP the board past it'},
+{id:'s15',title:'15. Decode Ways',
+q:'"12" → 2 ways ("AB" or "L"). What is the DP recurrence?\nWhat edge case trips most people?',
+hint:'Single digit valid if != \'0\'. Two digit valid if 10≤val≤26. Leading zero "06" is INVALID.',
+answer:'dp[i] = number of ways to decode s[0..i-1]\ndp[0] = 1 (empty string: 1 way)\ndp[1] = 1 if s[0]!= \'0\', else 0\n\nFor i >= 2:\n  single: s[i-1] != \'0\'  → dp[i] += dp[i-1]\n  double: 10 <= int(s[i-2..i-1]) <= 26  → dp[i] += dp[i-2]\n\nTrap: "06" is not valid (leading zero in two-digit).\nTrap: "0" alone is always invalid for single decode.',
+code:'int decode(string s){\n    int n=s.size();\n    vector<int> dp(n+1,0);\n    dp[0]=1; dp[1]=(s[0]!=\'0\')?1:0;\n    for(int i=2;i<=n;i++){\n        if(s[i-1]!=\'0\') dp[i]+=dp[i-1];\n        int two=stoi(s.substr(i-2,2));\n        if(two>=10&&two<=26) dp[i]+=dp[i-2];\n    }\n    return dp[n];\n}',loci:'📡 MICROWAVE — two buttons: 1-min and 2-min. dp[i] = ways to heat n minutes.'},
+{id:'s16',title:'16. Wildcard Matching',
+q:'Implement wildcard matching: \'?\' matches any single char, \'*\' matches any sequence.\nWhat are the DP transitions for \'*\'?',
+hint:'* matches 0 chars: dp[i][j-1]. * matches 1+ chars: dp[i-1][j].',
+answer:'dp[i][j] = can s[0..i-1] be matched by p[0..j-1]?\n\nBase: dp[0][0]=true. dp[0][j]=true only if p[0..j-1] all \'*\'.\n\nTransitions:\n  p[j-1] == \'?\': dp[i][j] = dp[i-1][j-1]  (match any one char)\n  p[j-1] == \'*\': dp[i][j] = dp[i][j-1]     (star matches 0)\n                            || dp[i-1][j]   (star matches 1 more)\n  p[j-1] == c:   dp[i][j] = s[i-1]==c && dp[i-1][j-1]',
+code:'bool wildcard(string s, string p){\n    int m=s.size(),n=p.size();\n    vector<vector<bool>> dp(m+1,vector<bool>(n+1,false));\n    dp[0][0]=true;\n    for(int j=1;j<=n;j++) dp[0][j]=p[j-1]==\'*\'&&dp[0][j-1];\n    for(int i=1;i<=m;i++)\n        for(int j=1;j<=n;j++)\n            dp[i][j]=(p[j-1]==\'*\')?(dp[i-1][j]||dp[i][j-1])\n                     :(p[j-1]==\'?\'||s[i-1]==p[j-1])&&dp[i-1][j-1];\n    return dp[m][n];\n}',loci:'🔥 OVEN — JOKER dial marked *; matches 0 degrees (dp[i][j-1]) or eats one more (dp[i-1][j])'},
+{id:'s17',title:'17. Roman Numerals',
+q:'Convert Roman to Integer and Integer to Roman.\nWhat is the subtraction rule? What is the greedy approach for toRoman?',
+hint:'toInt: subtract if current value < next value. toRoman: greedy largest denomination first.',
+answer:'Roman → Int:\n  For each symbol: if value[i] < value[i+1]: subtract it; else add it.\n  IV=4, IX=9, XL=40, XC=90, CD=400, CM=900\n\nInt → Roman:\n  Maintain list of (value, symbol) in DESCENDING order\n  including subtractive combos: 1000,900,500,400,100,90,50,40,10,9,5,4,1\n  Greedily subtract largest that fits, append symbol.',
+code:'// Int → Roman\nvector<pair<int,string>> vals={{1000,"M"},{900,"CM"},{500,"D"},\n  {400,"CD"},{100,"C"},{90,"XC"},{50,"L"},{40,"XL"},\n  {10,"X"},{9,"IX"},{5,"V"},{4,"IV"},{1,"I"}};\nstring res;\nfor(auto& p:vals) while(num>=p.first){res+=p.second;num-=p.first;}\nreturn res;',loci:'🍽️ DINING TABLE — GRANDPA subtracts a coin when smaller precedes larger; greedy largest-first back'},
+{id:'s18',title:'18. Trie (Prefix Tree)',
+q:'Implement a Trie with insert, search, startsWith.\nWhat is the difference between search and startsWith?',
+hint:'search needs isEnd==true at final node. startsWith just needs to reach the final node.',
+answer:'TrieNode: children[26] array + boolean isEnd\n\ninsert(word): walk/create nodes for each char; set isEnd=true at last node\nsearch(word): walk nodes; return false if any char missing; return node.isEnd at end\nstartsWith(prefix): walk nodes; return false if any char missing; return true at end\n\nTime: O(L) for all ops where L = word length.\nUse for: autocomplete, dictionary lookup, word prefix problems.',
+code:'struct TrieNode{\n    TrieNode* ch[26]={};\n    bool isEnd=false;\n};\nvoid insert(TrieNode* root, string& w){\n    TrieNode* node=root;\n    for(char c:w){\n        int i=c-\'a\';\n        if(!node->ch[i]) node->ch[i]=new TrieNode();\n        node=node->ch[i];\n    }\n    node->isEnd=true;\n}',loci:'📚 BOOKSHELF — organized A→Z then A→Z inside; walk one letter at a time, isEnd marks full word'},
+{id:'s19',title:'19. String Hashing',
+q:'How do polynomial rolling hashes enable O(1) substring comparison?\nWhat are the formula and good constants?',
+hint:'prefix[i] = prefix[i-1]*B + s[i]. Range hash = (prefix[r+1]-prefix[l]*B^(r-l+1))',
+answer:'Polynomial hash: treat string as base-B number\n  prefix[0]=0\n  prefix[i] = prefix[i-1]*B + s[i-1]\n\nHash of s[l..r]:\n  h = prefix[r+1] - prefix[l] * pow[r-l+1]  (mod prime)\n\nConstants: B=31 (lowercase), B=131 (all ASCII), MOD=1e9+7\nDouble hashing: use two (B,MOD) pairs → collision probability ≈ 1/MOD²\n\nUse for: O(1) substring compare, find duplicate substrings, Rabin-Karp extension.',
+code:'const long B=31, MOD=1e9+7;\nvector<long> pre(n+1,0), pw(n+1,1);\nfor(int i=0;i<n;i++){\n    pre[i+1]=(pre[i]*B+s[i]-\'a\'+1)%MOD;\n    pw[i+1]=pw[i]*B%MOD;\n}\n// hash of s[l..r]\nlong h=(pre[r+1]-pre[l]*pw[r-l+1]%MOD+MOD)%MOD;',loci:'🔐 BACK DOOR SAFE — combination is prefix-sum address; range hash = (prefix[r+1]-prefix[l]*pow)'}
+]});
+</script>
+<script>
+addTopic({id:'java-algos',icon:'☕',name:'Java — Algorithms',color:'#f89820',cards:[
+{id:'ja01',title:'Sliding Window',
+q:'When do you use sliding window?\nWrite the variable-size window template.',
+hint:'EXPAND right always · SHRINK left only when window violates the condition',
+answer:'Use for: longest/shortest contiguous subarray/substring satisfying a condition.\n\nTemplate:\n  int l = 0;\n  for (int r = 0; r < n; r++) {\n      // add arr[r] to window state\n      while (/* window invalid */) {\n          // remove arr[l] from state\n          l++;\n      }\n      ans = Math.max(ans, r - l + 1);  // or record min\n  }\n\nFixed window: only update answer when r >= k-1.',
+code:'// Longest substring with at most K distinct chars\nint l=0, maxLen=0;\nMap<Character,Integer> f=new HashMap<>();\nfor(int r=0;r<s.length();r++){\n    f.merge(s.charAt(r),1,Integer::sum);\n    while(f.size()>k){\n        f.merge(s.charAt(l),-1,Integer::sum);\n        if(f.get(s.charAt(l))==0) f.remove(s.charAt(l));\n        l++;\n    }\n    maxLen=Math.max(maxLen,r-l+1);\n}',loci:null},
+{id:'ja02',title:'Two Pointers',
+q:'Two pointer variants — opposite ends vs same direction.\nWhen do you use each? Give a classic example of each.',
+hint:'Opposite ends = sorted array, pair sum. Same direction = fast remove / Dutch flag.',
+answer:'Opposite ends (sorted array):\n  → Two Sum (sorted), container with most water, 3Sum\n  → Move l++ or r-- based on sum vs target\n\nSame direction (partition/fast-remove):\n  → Remove duplicates: slow pointer marks write position\n  → Dutch National Flag: lo/mid/hi three pointers\n  → Partition around pivot (quicksort)',
+code:'// 3Sum — fix one, two-pointer the rest\nArrays.sort(nums);\nfor(int i=0;i<n-2;i++){\n    if(i>0 && nums[i]==nums[i-1]) continue;\n    int l=i+1, r=n-1;\n    while(l<r){\n        int s=nums[i]+nums[l]+nums[r];\n        if(s==0){ res.add(...); while(l<r&&nums[l]==nums[l+1])l++; l++; r--; }\n        else if(s<0) l++; else r--;\n    }\n}',loci:null},
+{id:'ja03',title:'Fast / Slow Pointers',
+q:'Detect cycle in a linked list.\nAfter fast and slow meet, how do you find the CYCLE START?',
+hint:'Phase 2: reset one pointer to head, advance both by 1 → they meet at cycle start',
+answer:'Phase 1 — Detect:\n  fast moves 2 steps, slow moves 1 step.\n  If they meet → cycle exists.\n\nPhase 2 — Find start:\n  Reset slow (or fast) to head.\n  Both move 1 step at a time.\n  They meet exactly at the cycle start node.\n\nWhy? If entry is k steps from head,\nmeeting point is also k steps from entry around the cycle.',
+code:'ListNode slow=head, fast=head;\nwhile(fast!=null && fast.next!=null){\n    slow=slow.next; fast=fast.next.next;\n    if(slow==fast){\n        slow=head;  // reset to head\n        while(slow!=fast){ slow=slow.next; fast=fast.next; }\n        return slow; // cycle start\n    }\n}\nreturn null;',loci:null},
+{id:'ja04',title:'Binary Search — 3 Templates',
+q:'What are the three binary search templates?\nWhen does each one apply?',
+hint:'lo<=hi (exact find) · lo<hi (range narrowing) · lo+1<hi (avoid adjacent stall)',
+answer:'Template 1 — lo<=hi (exact target):\n  exit: lo > hi, return -1 if not found\n  use: sorted array exact lookup\n\nTemplate 2 — lo<hi (converge to answer):\n  exit: lo==hi holds the answer\n  use: find first/last position, min feasible value\n\nTemplate 3 — lo+1<hi (two adjacent remain):\n  exit: manually check lo and hi\n  use: problems where lo==hi can cause infinite loop\n\nKey rule: mid=lo+(hi-lo)/2 always (avoid overflow).',
+code:'// Template 2: first index where arr[i] >= target\nint lo=0, hi=arr.length;\nwhile(lo<hi){\n    int mid=lo+(hi-lo)/2;\n    if(arr[mid]<target) lo=mid+1;\n    else hi=mid;\n}\nreturn lo; // lo==hi is the answer',loci:null},
+{id:'ja05',title:'Merge Intervals',
+q:'Given a list of intervals, merge all overlapping ones.\nWhat do you sort by? What is the merge condition?',
+hint:'Sort by START. Merge if curr.start ≤ last.end (update end = max of both ends).',
+answer:'1. Sort intervals by start time: O(n log n)\n2. Add first interval to result.\n3. For each subsequent interval:\n   if curr.start <= last.end in result:\n       last.end = max(last.end, curr.end)  ← merge\n   else:\n       add curr to result\n\nInsert interval variant: binary search for position,\nthen merge with neighbors.',
+code:'Arrays.sort(intervals,(a,b)->a[0]-b[0]);\nList<int[]> res=new ArrayList<>();\nfor(int[] cur: intervals){\n    if(res.isEmpty()||cur[0]>res.get(res.size()-1)[1])\n        res.add(cur);\n    else\n        res.get(res.size()-1)[1]=Math.max(res.get(res.size()-1)[1],cur[1]);\n}',loci:null},
+{id:'ja06',title:'Top-K with Heap',
+q:'Find Kth largest element. Min-heap or max-heap?\nWhat is the time complexity?',
+hint:'Min-heap of size K. New element > top? → pop + push. Answer = heap.peek(). O(n log k)',
+answer:'Min-heap of size K holds the K largest elements seen so far.\nThe smallest of those K is at the top → that is the Kth largest.\n\nFor each element x:\n  if heap.size() < K: heap.offer(x)\n  else if x > heap.peek(): heap.poll(); heap.offer(x)\n\nFinal: heap.peek() = Kth largest\n\nAlternative: QuickSelect O(n) average but O(n²) worst.',
+code:'PriorityQueue<Integer> pq=new PriorityQueue<>(); // min-heap\nfor(int x: nums){\n    pq.offer(x);\n    if(pq.size()>k) pq.poll();\n}\nreturn pq.peek();',loci:null},
+{id:'ja07',title:'Backtracking Template',
+q:'Write the generic backtracking template.\nPermutations vs combinations — what changes?',
+hint:'choose → recurse → unchoose. Permutations: start=0+visited[]. Combinations: start=i+1.',
+answer:'Template:\n  void backtrack(state, choices) {\n      if (base case) { record result; return; }\n      for (choice : choices) {\n          if (invalid) continue;          // pruning\n          make choice;\n          backtrack(next state, ...);\n          undo choice;                   // backtrack\n      }\n  }\n\nPermutations: iterate from 0, use boolean[] used.\nCombinations: pass start index, iterate from start.\nSubsets: include current or skip it (two branches).',
+code:'// Permutations\nvoid perm(int[] nums, boolean[] used, List<Integer> path){\n    if(path.size()==nums.length){res.add(new ArrayList<>(path));return;}\n    for(int i=0;i<nums.length;i++){\n        if(used[i]) continue;\n        used[i]=true; path.add(nums[i]);\n        perm(nums,used,path);\n        path.remove(path.size()-1); used[i]=false;\n    }\n}',loci:null},
+{id:'ja08',title:'Prefix Sum',
+q:'Range sum query in O(1) after O(n) preprocessing.\nFormula? 2D version?',
+hint:'prefix[i]=prefix[i-1]+nums[i-1]. Range[l,r]=prefix[r+1]-prefix[l].',
+answer:'1D:\n  prefix[0]=0; prefix[i]=prefix[i-1]+nums[i-1]\n  sum(l,r) = prefix[r+1] - prefix[l]   (0-indexed)\n\n2D:\n  dp[i][j] = dp[i-1][j] + dp[i][j-1] - dp[i-1][j-1] + grid[i-1][j-1]\n  sum(r1,c1,r2,c2) = dp[r2][c2]-dp[r1-1][c2]-dp[r2][c1-1]+dp[r1-1][c1-1]\n\nUse for: subarray sum = k, max subarray ≤ k, number of subarrays with sum divisible by k.',
+code:'int[] pre=new int[n+1];\nfor(int i=0;i<n;i++) pre[i+1]=pre[i]+nums[i];\n// sum of nums[l..r] (0-indexed):\nint sum=pre[r+1]-pre[l];',loci:null},
+{id:'ja09',title:'Monotonic Stack',
+q:'What class of problems uses a monotonic stack?\nDecreasing stack vs increasing — which finds next greater?',
+hint:'Decreasing stack → pop when new > top → yields NEXT GREATER for each popped element.',
+answer:'Decreasing stack: maintain stack where top ≥ current.\n  When new element > stack.top(): pop → that element\'s next greater = new element.\n  Use for: next greater element, daily temperatures, stock span.\n\nIncreasing stack: maintain stack where top ≤ current.\n  When new element < top: pop → useful for histogram max area.\n\nKey pattern:\n  while (!stack.isEmpty() && condition) pop and process;\n  push current index.',
+code:'// Next Greater Element\nint[] res=new int[n]; Arrays.fill(res,-1);\nDeque<Integer> stk=new ArrayDeque<>();\nfor(int i=0;i<n;i++){\n    while(!stk.isEmpty()&&nums[i]>nums[stk.peek()]){\n        res[stk.pop()]=nums[i];\n    }\n    stk.push(i);\n}',loci:null},
+{id:'ja10',title:'Union-Find (DSU)',
+q:'What two optimizations make Union-Find nearly O(1)?\nHow do you detect a cycle using Union-Find?',
+hint:'Path compression (find) + Union by rank. Cycle: if find(u)==find(v) before union → cycle.',
+answer:'find() with path compression:\n  parent[x] = find(parent[x])  ← flattens tree to almost one level\n\nunion() by rank:\n  attach tree with smaller rank under larger root\n  only increase rank when two equal-rank roots merge\n\nTogether: O(α(n)) ≈ O(1) amortized (α = inverse Ackermann).\n\nCycle detection (undirected):\n  for each edge (u,v):\n    if find(u)==find(v): CYCLE\n    else: union(u,v)',
+code:'int[] parent,rank;\nvoid init(int n){parent=new int[n];rank=new int[n];\n    for(int i=0;i<n;i++)parent[i]=i;}\nint find(int x){return parent[x]==x?x:(parent[x]=find(parent[x]));}\nvoid union(int a,int b){a=find(a);b=find(b);\n    if(a==b)return;\n    if(rank[a]<rank[b]){int t=a;a=b;b=t;}\n    parent[b]=a; if(rank[a]==rank[b])rank[a]++;}',loci:null}
+]});
+</script>
+<script>
+addTopic({id:'dp',icon:'🎬',name:'Dynamic Programming',color:'#bc8cff',cards:[
+{id:'dp01',title:'1. Fibonacci / Climbing Stairs',
+q:'Count ways to climb n stairs (1 or 2 steps at a time).\nWhy can you reduce to O(1) space?',
+hint:'dp[n] = dp[n-1] + dp[n-2] — only last two values needed → rolling variables',
+answer:'dp[n] = dp[n-1] + dp[n-2] (same recurrence as Fibonacci).\nO(1) space: keep only previous two values — a, b.\n  c = a + b; a = b; b = c\n\nFrog jump (1..k steps, minimize cost):\n  dp[i] = min over j in 1..k of dp[i-j] + |h[i]-h[i-j]|\n\nLOCI: PARKING LOT — frog hops 1 or 2 stripes; total ways = sum of last two.',
+code:'int climbStairs(int n){\n    if(n<=1) return 1;\n    int a=1, b=1;\n    for(int i=2;i<=n;i++){ int c=a+b; a=b; b=c; }\n    return b;\n}',loci:'🅿️ PARKING LOT — frog hops 1 or 2 stripes; total = dp[n-1]+dp[n-2]'},
+{id:'dp02',title:'2. 0/1 Knapsack',
+q:'Max value with weight capacity W. Each item used at most once.\nWhy must the inner loop go HIGH → LOW?',
+hint:'Inner HIGH→LOW ensures each item is used at most once (0/1). LOW→HIGH would allow reuse.',
+answer:'Outer = items, inner = weight HIGH → LOW.\n  dp[j] = max(dp[j], dp[j - wt[i]] + val[i])\n\nWhy HIGH→LOW: when processing item i, dp[j-wt[i]] still reflects state BEFORE item i was added. LOW→HIGH would look at dp[j-wt[i]] that already includes item i → reuse.\n\nLOCI: TICKET BOOTH — take the ticket or leave it; inner HIGH→LOW prevents reuse.',
+code:'int knapsack(int W, vector<int>& wt, vector<int>& val){\n    vector<int> dp(W+1, 0);\n    for(int i=0;i<wt.size();i++)\n        for(int j=W;j>=wt[i];j--)  // HIGH→LOW\n            dp[j]=max(dp[j], dp[j-wt[i]]+val[i]);\n    return dp[W];\n}',loci:'🎟️ TICKET BOOTH — take or leave each ticket; inner HIGH→LOW = no reuse'},
+{id:'dp03',title:'3. Unbounded Knapsack / Coin Change Min',
+q:'Minimum coins to make amount. Each coin can be used unlimited times.\nWhy does the inner loop go LOW → HIGH?',
+hint:'LOW→HIGH allows reusing the same coin. dp[i] = min(dp[i], dp[i-c]+1)',
+answer:'dp[0]=0, dp[i]=INF initially.\n  For each amount i from 1 to target:\n    for each coin c: dp[i] = min(dp[i], dp[i-c]+1)\n\nWhy LOW→HIGH: dp[i-c] already reflects current coin being reused → correct for unbounded.\n\nUnbounded Knapsack (max value with reuse):\n  outer=capacity, inner=items, dp[j]=max(dp[j], dp[j-wt]+val)\n\nLOCI: CONCESSION STAND — vending machine RESTOCKS coin after each use; LOW→HIGH = reuse.',
+code:'int coinChangeMin(vector<int>& coins, int amt){\n    vector<int> dp(amt+1, INT_MAX);\n    dp[0]=0;\n    for(int i=1;i<=amt;i++)\n        for(int c:coins)\n            if(c<=i && dp[i-c]!=INT_MAX)\n                dp[i]=min(dp[i], dp[i-c]+1);\n    return dp[amt]==INT_MAX ? -1 : dp[amt];\n}',loci:'🥤 CONCESSION STAND — machine restocks coin; LOW→HIGH = reuse allowed'},
+{id:'dp04',title:'4. Coin Change — Count Ways',
+q:'"How many ways to make amount using coins?" — combinations, not permutations.\nWhat loop order gives combinations vs permutations?',
+hint:'Outer=coins → combinations (each coin processed once, no duplicate sets). Outer=amounts → permutations.',
+answer:'Combinations (no duplicate sets — order doesn\'t matter):\n  outer = coins; inner = amounts LOW→HIGH\n  dp[j] += dp[j-c]\n\nPermutations (order matters — 1,2 and 2,1 are different):\n  outer = amounts; inner = coins\n  dp[j] += dp[j-c]\n\nIntuition: if outer=coins, each coin is "committed" before moving to the next → no repeated sets.\n\nLOCI: SODA FOUNTAIN — outer=syrup flavor, inner=cup volume → counts combos not perms.',
+code:'// Combinations (outer=coins)\nlong coinWays(vector<int>& coins, int amt){\n    vector<long> dp(amt+1, 0); dp[0]=1;\n    for(int c:coins)\n        for(int j=c;j<=amt;j++)\n            dp[j]+=dp[j-c];\n    return dp[amt];\n}',loci:'🥤 SODA FOUNTAIN — 4 syrup flavors; outer=flavor → no duplicate combos'},
+{id:'dp05',title:'5. LCS — Longest Common Subsequence',
+q:'LCS of "ABCBDAB" and "BDCAB".\nWhat is the recurrence? How do you reconstruct the actual sequence?',
+hint:'Match → dp[i-1][j-1]+1. No match → max(dp[i-1][j], dp[i][j-1]).',
+answer:'dp[i][j] = LCS length of s[0..i-1] and t[0..j-1]\n  if s[i-1]==t[j-1]: dp[i][j] = dp[i-1][j-1] + 1\n  else: dp[i][j] = max(dp[i-1][j], dp[i][j-1])\n\nReconstruct: walk back from dp[m][n]:\n  if s[i-1]==t[j-1]: include char, move diagonal\n  else: go in direction of larger dp value\n\nLOCI: HALLWAY CARPET — two runners; step DIAGONALLY when tile colors match.',
+code:'int lcs(string& s, string& t){\n    int m=s.size(), n=t.size();\n    vector<vector<int>> dp(m+1,vector<int>(n+1,0));\n    for(int i=1;i<=m;i++)\n        for(int j=1;j<=n;j++)\n            dp[i][j]=(s[i-1]==t[j-1])? dp[i-1][j-1]+1\n                                       : max(dp[i-1][j],dp[i][j-1]);\n    return dp[m][n];\n}',loci:'🏃 HALLWAY CARPET — two runners step diagonally when tiles match'},
+{id:'dp06',title:'6. LIS — Longest Increasing Subsequence O(n log n)',
+q:'Find LIS length in O(n log n).\nWhat does the "tails" array represent? What operation maintains it?',
+hint:'tails[i] = smallest tail element for all increasing subsequences of length i+1. Use lower_bound to replace.',
+answer:'tails array: tails[i] = smallest ending value of any increasing subsequence of length i+1.\n\nFor each element x:\n  pos = lower_bound(tails, x)  ← first index where tails[pos] >= x\n  if pos == tails.size(): extend (new max length)\n  else: replace tails[pos] = x  ← maintain smallest tail\n\nAnswer = tails.size()\n\nNote: tails is NOT the actual LIS — it\'s a structure for counting length.\nFor reconstruction: use dp[i] = length of LIS ending at a[i], parent array.\n\nLOCI: SEAT ROW A — seats must only increase; binary-search the "tails" deck.',
+code:'int lisNlogN(vector<int>& a){\n    vector<int> tails;\n    for(int x:a){\n        auto it=lower_bound(tails.begin(),tails.end(),x);\n        if(it==tails.end()) tails.push_back(x);\n        else *it=x;\n    }\n    return tails.size();\n}',loci:'💺 SEAT ROW A — seats must increase; binary-search tails deck for O(n log n)'},
+{id:'dp07',title:'7. Edit Distance (Levenshtein)',
+q:'Minimum operations (insert/delete/replace) to convert s → t.\nWhat are the three transitions when characters don\'t match?',
+hint:'Match: dp[i-1][j-1]. No match: min(replace=dp[i-1][j-1], delete=dp[i-1][j], insert=dp[i][j-1]) + 1',
+answer:'dp[i][j] = min edits to turn s[0..i-1] into t[0..j-1]\n\nBase: dp[i][0]=i (delete all), dp[0][j]=j (insert all)\n\nTransitions:\n  s[i-1]==t[j-1]: dp[i][j] = dp[i-1][j-1]  (free match)\n  else: dp[i][j] = 1 + min(\n    dp[i-1][j-1],  // replace s[i] with t[j]\n    dp[i-1][j],    // delete s[i]\n    dp[i][j-1]     // insert t[j]\n  )\n\nLOCI: MOVIE SCREEN — subtitle typos; each fix costs 1.',
+code:'int editDist(string& s, string& t){\n    int m=s.size(), n=t.size();\n    vector<vector<int>> dp(m+1,vector<int>(n+1));\n    for(int i=0;i<=m;i++) dp[i][0]=i;\n    for(int j=0;j<=n;j++) dp[0][j]=j;\n    for(int i=1;i<=m;i++)\n        for(int j=1;j<=n;j++)\n            dp[i][j]=(s[i-1]==t[j-1])? dp[i-1][j-1]\n                     : 1+min({dp[i-1][j-1],dp[i-1][j],dp[i][j-1]});\n    return dp[m][n];\n}',loci:'🎬 MOVIE SCREEN — subtitle typos; replace/insert/delete each cost 1'},
+{id:'dp08',title:'8. Grid Paths / Min Path Sum',
+q:'Count paths from top-left to bottom-right (right/down only). How do you handle obstacles?\nFor min path sum, what is dp[i][j]?',
+hint:'Paths: dp[i][j]=dp[i-1][j]+dp[i][j-1]; obstacle cell = 0 paths. Min sum: dp[i][j]=grid[i][j]+min(up,left).',
+answer:'Count paths (no obstacles):\n  dp[i][j] = dp[i-1][j] + dp[i][j-1]\n  dp[0][*] = dp[*][0] = 1\n\nWith obstacles (grid[i][j]==1 means blocked):\n  if blocked: dp[i][j] = 0\n  else: dp[i][j] = dp[i-1][j] + dp[i][j-1]\n\nMin path sum:\n  dp[i][j] = grid[i][j] + min(dp[i-1][j], dp[i][j-1])\n\nLOCI: PROJECTOR ROOM floor is a GRID — only RIGHT or DOWN.',
+code:'int minPathSum(vector<vector<int>>& g){\n    int m=g.size(), n=g[0].size();\n    vector<vector<int>> dp(m,vector<int>(n));\n    dp[0][0]=g[0][0];\n    for(int i=1;i<m;i++) dp[i][0]=dp[i-1][0]+g[i][0];\n    for(int j=1;j<n;j++) dp[0][j]=dp[0][j-1]+g[0][j];\n    for(int i=1;i<m;i++)\n        for(int j=1;j<n;j++)\n            dp[i][j]=g[i][j]+min(dp[i-1][j],dp[i][j-1]);\n    return dp[m-1][n-1];\n}',loci:'📽️ PROJECTOR ROOM — grid floor, only right/down moves allowed'},
+{id:'dp09',title:'9. Interval DP — Merge Stones',
+q:'Minimum cost to merge n piles into one (cost = sum of merged pile). What is the key loop structure?',
+hint:'Iterate by GAP size (1 to n-1). For each (l, r), try all split points k. Use prefix sums for range sum in O(1).',
+answer:'Iterate by gap = r - l:\n  for gap = 1 to n-1:\n    for l = 0; l+gap < n; l++:\n      r = l + gap\n      for k = l to r-1:\n        dp[l][r] = min(dp[l][r], dp[l][k] + dp[k+1][r] + sum(l,r))\n\nWhy gap order? Smaller subproblems (shorter gaps) are solved before larger ones.\nsum(l,r) = prefix[r+1] - prefix[l]  ← O(1) range sum.\n\nBurst Balloons variant: dp[l][r] = max coins bursting all in open interval (l,r); k is the LAST balloon burst.\n\nLOCI: BATHROOM TILES — janitor snaps tiles; each snap costs combined length.',
+code:'int mergeStones(vector<int>& s){\n    int n=s.size();\n    vector<int> pre(n+1,0);\n    for(int i=0;i<n;i++) pre[i+1]=pre[i]+s[i];\n    vector<vector<int>> dp(n,vector<int>(n,0));\n    for(int gap=1;gap<n;gap++)\n        for(int l=0;l+gap<n;l++){\n            int r=l+gap; dp[l][r]=INT_MAX;\n            for(int k=l;k<r;k++)\n                dp[l][r]=min(dp[l][r], dp[l][k]+dp[k+1][r]+pre[r+1]-pre[l]);\n        }\n    return dp[0][n-1];\n}',loci:'🚿 BATHROOM TILES — janitor snaps tiles; iterate gap size, try all split points'},
+{id:'dp10',title:'10. Subset Sum / Partition Equal Subset',
+q:'Can a subset of nums sum to target? (Partition Equal: can we split into two equal halves?)\nWhat is the recurrence and loop direction?',
+hint:'dp[j] = can we reach sum j? Outer=items, inner=target HIGH→LOW (0/1 — each item once).',
+answer:'dp[j] = true if some subset sums to j\ndp[0] = true\n\nFor each num x:\n  for j = target down to x:\n    dp[j] = dp[j] || dp[j-x]   ← HIGH→LOW prevents reuse\n\nPartition Equal Subset:\n  if total is odd → impossible\n  target = total / 2\n  run subset sum with target\n\nCount subsets: dp[j] += dp[j-x] (same loop direction)\n\nLOCI: COAT CHECK — can subset of coat weights sum to exactly HALF the total?',
+code:'bool subsetSum(vector<int>& nums, int target){\n    vector<bool> dp(target+1, false);\n    dp[0]=true;\n    for(int x:nums)\n        for(int j=target;j>=x;j--)\n            dp[j]=dp[j]||dp[j-x];\n    return dp[target];\n}',loci:'🧥 COAT CHECK — can subset of coat weights sum to half total? HIGH→LOW = no reuse'},
+{id:'dp11',title:'11. Weighted Job Scheduling',
+q:'Find max-profit set of non-overlapping jobs.\nWhat data structure finds the last non-conflicting job efficiently?',
+hint:'Sort by end time. dp[i] = max(skip: dp[i-1], take: dp[last_non_conflict]+profit[i]). Binary search for last_non_conflict.',
+answer:'1. Sort jobs by end time.\n2. dp[i] = max profit using jobs 1..i\n   skip job i: dp[i-1]\n   take job i: dp[last] + profit[i]\n     where last = last job j with end[j] <= start[i]  ← binary search\n3. dp[i] = max(dp[i-1], dp[last] + profit[i])\n\nBinary search: find rightmost j where jobs[j].end <= jobs[i].start.\n\nO(n log n): sort + binary search per job.\n\nLOCI: VALET STATION — pick most profitable non-overlapping car arrivals.',
+code:'struct Job{int start,end,profit;};\nint weightedJobSched(vector<Job>& jobs){\n    sort(jobs.begin(),jobs.end(),[](auto&a,auto&b){return a.end<b.end;});\n    int n=jobs.size();\n    vector<int> dp(n+1,0);\n    for(int i=1;i<=n;i++){\n        int lo=0,hi=i-1;\n        while(lo<hi){int mid=(lo+hi+1)/2;\n            if(jobs[mid-1].end<=jobs[i-1].start)lo=mid; else hi=mid-1;}\n        dp[i]=max(dp[i-1], dp[lo]+jobs[i-1].profit);\n    }\n    return dp[n];\n}',loci:'🚗 VALET STATION — sort by end, binary search last non-conflict, take or skip'},
+{id:'dp12',title:'12. Bitmask DP — TSP',
+q:'Visit all n nodes exactly once with minimum cost (Traveling Salesman).\nWhat is the state? What is the transition?',
+hint:'State: dp[mask][v] = min cost to have visited exactly "mask" nodes, ending at v.',
+answer:'dp[mask][v] = min cost to visit exactly the nodes in mask, ending at node v.\n\nInit: dp[1][0] = 0  (visited only node 0, cost 0)\nTransition:\n  dp[mask | (1<<u)][u] = min(..., dp[mask][v] + dist[v][u])\n  for all v in mask, u not in mask\n\nAnswer: min over all v of dp[FULL][v] + dist[v][0]\n  where FULL = (1<<n)-1\n\nComplexity: O(2^n × n²). Only feasible for n ≤ 20.\n\nLOCI: SECURITY GUARD tours every parking spot exactly once.',
+code:'int tsp(vector<vector<int>>& dist){\n    int n=dist.size(), FULL=(1<<n)-1;\n    vector<vector<int>> dp(1<<n,vector<int>(n,INT_MAX/2));\n    dp[1][0]=0;\n    for(int mask=1;mask<=FULL;mask++)\n        for(int v=0;v<n;v++){\n            if(!(mask&(1<<v))||dp[mask][v]==INT_MAX/2) continue;\n            for(int u=0;u<n;u++){\n                if(mask&(1<<u)) continue;\n                dp[mask|(1<<u)][u]=min(dp[mask|(1<<u)][u],dp[mask][v]+dist[v][u]);\n            }\n        }\n    int ans=INT_MAX;\n    for(int v=1;v<n;v++) ans=min(ans,dp[FULL][v]+dist[v][0]);\n    return ans;\n}',loci:'🛡️ SECURITY BOOTH — tour every spot once; state=(mask,last_node)'},
+{id:'dp13',title:'13. Tree DP — Max Independent Set',
+q:'In a tree with node values, select nodes so no two adjacent nodes are selected. Maximize sum.\nWhat are the two states per node?',
+hint:'dp[v][0] = max sum if v is excluded. dp[v][1] = max sum if v is included. Post-order DFS.',
+answer:'Post-order DFS returns (excluded, included) for each node.\n\ndp[v][0] (v excluded): each child can be either → max(dp[child][0], dp[child][1])\ndp[v][1] (v included): each child must be excluded → dp[child][0]\n\nAnswer: max(dp[root][0], dp[root][1])\n\nApplies to: House Robber III (tree robbery), org chart (skip manager+report).\n\nHouse Robber I (array): dp[i] = max(dp[i-1], dp[i-2]+nums[i])\n\nLOCI: MANAGER\'S OFFICE — org chart; never pick boss AND direct report.',
+code:'pair<int,int> dfs(int v, int par, vector<vector<int>>& adj, vector<int>& val){\n    pair<int,int> res={0,val[v]}; // {excluded, included}\n    for(int u:adj[v]){\n        if(u==par) continue;\n        auto sub=dfs(u,v,adj,val);\n        res.first +=max(sub.first,sub.second);\n        res.second+=sub.first;\n    }\n    return res;\n}',loci:'🏢 MANAGER\'S OFFICE — can\'t pick boss AND report; dp[v][0/1] post-order'},
+{id:'dp14',title:'14. Digit DP',
+q:'Count integers in [0, N] where digit sum equals k.\nWhat two flags does the recursion carry? When can you memoize?',
+hint:'tight (is current prefix equal to N\'s prefix?) and leading (have we placed a non-zero digit yet?). Memoize only when NOT tight AND NOT leading.',
+answer:'Recurse position by position.\n\nFlags:\n  tight: if true, current digit <= N[pos]; else any digit 0-9\n  leading: if true, haven\'t placed first non-zero digit yet (skip leading zeros)\n\nMemo key: (pos, remaining_sum) — only valid when !tight && !leading.\n  tight states are unique paths; caching them causes wrong counts.\n\nTemplate:\n  digitDFS(pos, rem, tight, leading)\n  base: pos==len → return (rem==0 && !leading) ? 1 : 0\n  limit = tight ? N[pos] : 9\n  for d in 0..limit: recurse with updated flags\n\nLOCI: MARQUEE SIGN — count digit by digit; track tight bound and running total.',
+code:'long dfs(int pos,int rem,bool tight,bool lead,string& num,vector<vector<long>>& memo){\n    if(pos==num.size()) return (!lead&&rem==0)?1:0;\n    if(!tight&&!lead&&memo[pos][rem]!=-1) return memo[pos][rem];\n    int lim=tight?(num[pos]-\'0\'):9; long res=0;\n    for(int d=0;d<=lim;d++){\n        bool nt=tight&&d==lim, nl=lead&&d==0;\n        int nr=nl?rem:rem-d;\n        if(nr>=0) res+=dfs(pos+1,nr,nt,nl,num,memo);\n    }\n    if(!tight&&!lead) memo[pos][rem]=res;\n    return res;\n}',loci:'📺 MARQUEE SIGN — digit by digit; tight+leading flags; memoize only free states'}
+]});
+</script>
+<script>
+addTopic({id:'trees',icon:'🌳',name:'Trees',color:'#3fb950',cards:[
+{id:'tr01',title:'1. BST: Insert / Search / Delete',
+q:'BST delete has 3 cases. What are they? How do you handle the two-children case?',
+hint:'(a) leaf → null. (b) one child → replace with child. (c) two children → replace value with inorder successor (leftmost of right subtree), then delete successor.',
+answer:'Insert: recurse left if val < root, right if val > root; place when null.\nSearch: same direction logic.\n\nDelete — 3 cases:\n  (a) leaf node: return null\n  (b) one child: return that child\n  (c) two children:\n    1. Find inorder successor = leftmost node of right subtree\n    2. Copy successor\'s value into current node\n    3. Delete successor from right subtree (it has at most one child)\n\nMental model: "always go left if smaller, right if larger".',
+code:'TreeNode* bstDelete(TreeNode* root, int val){\n    if(!root) return nullptr;\n    if(val<root->val) root->left=bstDelete(root->left,val);\n    else if(val>root->val) root->right=bstDelete(root->right,val);\n    else{\n        if(!root->left) return root->right;\n        if(!root->right) return root->left;\n        TreeNode* succ=root->right;\n        while(succ->left) succ=succ->left;\n        root->val=succ->val;\n        root->right=bstDelete(root->right,succ->val);\n    }\n    return root;\n}',loci:null},
+{id:'tr02',title:'2. Tree Traversals (Recursive + Iterative)',
+q:'Inorder, Preorder, Postorder — when to use each? How do you do iterative inorder?',
+hint:'Pre=root first (serialize/copy). In=sorted BST order. Post=children before parent (delete/eval). Iterative inorder: push-left-until-null, pop, process, go right.',
+answer:'Preorder (root, left, right): copying trees, serialization.\nInorder (left, root, right): gives sorted order for BST.\nPostorder (left, right, root): deletion, expression tree evaluation.\n\nIterative inorder:\n  cur = root\n  while cur or stack not empty:\n    while cur: push cur; cur = cur.left  ← go left as far as possible\n    cur = stack.pop(); process(cur)\n    cur = cur.right\n\nIterative preorder: push right before left (so left is processed first).',
+code:'vector<int> inorderIter(TreeNode* root){\n    vector<int> res; stack<TreeNode*> st;\n    TreeNode* cur=root;\n    while(cur||!st.empty()){\n        while(cur){st.push(cur);cur=cur->left;}\n        cur=st.top();st.pop();\n        res.push_back(cur->val);\n        cur=cur->right;\n    }\n    return res;\n}',loci:null},
+{id:'tr03',title:'3. Level-Order BFS / Right Side View / Zigzag',
+q:'How do you process one level at a time in BFS?\nRight side view: which node from each level?',
+hint:'Snapshot queue.size() at the start of each level. Right view = last node at each level.',
+answer:'BFS level order:\n  queue.push(root)\n  while queue not empty:\n    sz = queue.size()          ← snapshot current level count\n    for i in 0..sz-1:\n      node = queue.pop(); record node.val\n      if node.left: queue.push(node.left)\n      if node.right: queue.push(node.right)\n\nRight side view: record node.val only when i == sz-1.\n\nZigzag: use deque for level; alternate push_back/push_front based on direction.',
+code:'vector<vector<int>> levelOrder(TreeNode* root){\n    if(!root) return {};\n    vector<vector<int>> res; queue<TreeNode*> q;\n    q.push(root);\n    while(!q.empty()){\n        int sz=q.size(); vector<int> level;\n        for(int i=0;i<sz;i++){\n            auto node=q.front();q.pop();\n            level.push_back(node->val);\n            if(node->left) q.push(node->left);\n            if(node->right) q.push(node->right);\n        }\n        res.push_back(level);\n    }\n    return res;\n}',loci:null},
+{id:'tr04',title:'4. Validate BST',
+q:'Why is checking only local parent comparison wrong?\nWhat is the correct approach?',
+hint:'Pass down (min, max) bounds through the recursion. Every node must be strictly within its bounds.',
+answer:'Wrong: checking only if left.val < root.val and right.val > root.val.\n  Example:  5\n           / \\\n          1   7\n               \\\n                4  ← 4 < 5 but is in right subtree of 5 → invalid!\n\nCorrect: pass bounds down.\n  validateBST(root, LONG_MIN, LONG_MAX)\n  at each node:\n    if val <= minBound || val >= maxBound → false\n    recurse left with maxBound = root.val\n    recurse right with minBound = root.val',
+code:'bool validate(TreeNode* root, long mn=LONG_MIN, long mx=LONG_MAX){\n    if(!root) return true;\n    if(root->val<=mn||root->val>=mx) return false;\n    return validate(root->left,mn,root->val) &&\n           validate(root->right,root->val,mx);\n}',loci:null},
+{id:'tr05',title:'5. LCA — Lowest Common Ancestor',
+q:'LCA in a binary tree vs BST — what changes?\nWhat does it mean when both left and right return non-null?',
+hint:'Binary tree: if both left and right are non-null, root IS the LCA. BST: walk left if both < root, right if both > root.',
+answer:'Binary tree (general):\n  if root == null || root == p || root == q: return root\n  left = lca(root.left, p, q)\n  right = lca(root.right, p, q)\n  if left && right: return root  ← p and q split across subtrees\n  return left ?: right           ← one side found both\n\nBST (exploits ordering):\n  if p < root && q < root: go left\n  if p > root && q > root: go right\n  else: root IS the LCA  (p and q split here)\n\nO(n) for binary tree, O(h) for BST.',
+code:'TreeNode* lca(TreeNode* root, TreeNode* p, TreeNode* q){\n    if(!root||root==p||root==q) return root;\n    auto left=lca(root->left,p,q);\n    auto right=lca(root->right,p,q);\n    if(left&&right) return root;\n    return left?left:right;\n}',loci:null},
+{id:'tr06',title:'6. Max Path Sum (any path)',
+q:'Max path sum where path can start and end at any node.\nWhat do you return to the parent vs what do you track globally?',
+hint:'Return max(left,right)+root.val to parent (can only extend ONE side). Update globalMax with left+right+root.val (path through root).',
+answer:'At each node:\n  l = max(0, maxPathDown(root.left))   ← 0 = don\'t extend (negative)\n  r = max(0, maxPathDown(root.right))\n\n  Update global: globalMax = max(globalMax, l + r + root.val)\n    → this is the path that goes through root (can use both sides)\n\n  Return to parent: max(l, r) + root.val\n    → parent can only extend ONE direction (can\'t use a fork)\n\nCritical insight: the path through root USES both sides for the global max, but we can only RETURN one side to the parent.',
+code:'int helper(TreeNode* root, int& gmax){\n    if(!root) return 0;\n    int l=max(0,helper(root->left,gmax));\n    int r=max(0,helper(root->right,gmax));\n    gmax=max(gmax, l+r+root->val);\n    return max(l,r)+root->val;\n}\nint maxPathSum(TreeNode* root){\n    int res=INT_MIN; helper(root,res); return res;\n}',loci:null},
+{id:'tr07',title:'7. Diameter of Binary Tree',
+q:'Diameter = longest path between any two nodes (in edges).\nWhy might the diameter NOT pass through the root?',
+hint:'At each node: diameter through it = left_height + right_height. Track global max. Return height (max side + 1) to parent.',
+answer:'diameter through node v = left_height(v) + right_height(v)\n\nThis may not go through the root — any pair of nodes defines a path.\n\nAlgorithm: post-order DFS, track global max.\n  At each node: update diam = max(diam, l + r)\n  Return 1 + max(l, r)  ← height to parent\n\nNote: diameter in NODES = left_height + right_height + 1.\n      diameter in EDGES = left_height + right_height.',
+code:'int helper(TreeNode* root, int& d){\n    if(!root) return 0;\n    int l=helper(root->left,d);\n    int r=helper(root->right,d);\n    d=max(d,l+r);\n    return 1+max(l,r);\n}\nint diameter(TreeNode* root){int d=0;helper(root,d);return d;}',loci:null},
+{id:'tr08',title:'8. Serialize / Deserialize Binary Tree',
+q:'How do you serialize a tree to a string and reconstruct it?\nWhy must null markers be included?',
+hint:'Preorder with "#" for nulls → unique encoding. Reconstruct by reading tokens from stream.',
+answer:'Serialize (preorder):\n  if root null: return "#,"\n  return root.val + "," + serialize(left) + serialize(right)\n\nDeserialize:\n  read next token from stream\n  if "#": return null\n  node = new TreeNode(parseInt(token))\n  node.left = deserialize(stream)\n  node.right = deserialize(stream)\n  return node\n\nWhy nulls needed: without "#", you can\'t distinguish which nodes are leaves vs internal nodes with one child.\n\nAlternative: BFS with level-order encoding (like LeetCode input format).',
+code:'string serialize(TreeNode* root){\n    if(!root) return "#,";\n    return to_string(root->val)+","+serialize(root->left)+serialize(root->right);\n}\nTreeNode* deser(istringstream& ss){\n    string t; getline(ss,t,\',\');\n    if(t=="#") return nullptr;\n    TreeNode* n=new TreeNode(stoi(t));\n    n->left=deser(ss); n->right=deser(ss);\n    return n;\n}',loci:null},
+{id:'tr09',title:'9. Kth Smallest in BST',
+q:'Find kth smallest element in a BST.\nHow do you do it without building a vector?',
+hint:'Iterative inorder (BST inorder = sorted). Use a counter; stop when counter hits k.',
+answer:'Inorder traversal of BST gives sorted order.\n\nIterative (no extra vector):\n  while cur or stack not empty:\n    push all the way left\n    pop → decrement k → if k==0: return this node\'s value\n    go right\n\nO(H + k) time where H is height.\n\nVariant: if BST is frequently modified with kth queries → augment each node with subtree_size → O(H) per query.',
+code:'int kthSmallest(TreeNode* root, int k){\n    stack<TreeNode*> st; TreeNode* cur=root;\n    while(cur||!st.empty()){\n        while(cur){st.push(cur);cur=cur->left;}\n        cur=st.top();st.pop();\n        if(--k==0) return cur->val;\n        cur=cur->right;\n    }\n    return -1;\n}',loci:null},
+{id:'tr10',title:'10. Flatten Binary Tree to Linked List',
+q:'Flatten a binary tree to a right-skewed list in preorder, in-place.\nWhat is the O(1) space iterative trick?',
+hint:'For each node with a left child: find rightmost node of left subtree, attach original right there, then promote left to right.',
+answer:'In-place iterative (Morris-like):\n  cur = root\n  while cur:\n    if cur.left:\n      rightmost = find rightmost of cur.left subtree\n      rightmost.right = cur.right   ← attach original right at tail\n      cur.right = cur.left          ← promote left to right\n      cur.left = null\n    cur = cur.right\n\nResult: right-skewed tree in preorder order.\nO(n) time, O(1) space.',
+code:'void flatten(TreeNode* root){\n    TreeNode* cur=root;\n    while(cur){\n        if(cur->left){\n            TreeNode* rm=cur->left;\n            while(rm->right) rm=rm->right; // find rightmost of left\n            rm->right=cur->right;  // attach original right at tail\n            cur->right=cur->left;  // promote left\n            cur->left=nullptr;\n        }\n        cur=cur->right;\n    }\n}',loci:null}
+]});
+</script>
+<script>
+addTopic({id:'dp-patterns',icon:'🎨',name:'Design Patterns',color:'#f89820',cards:[
+{id:'pat01',title:'1. Singleton',
+q:'Implement a thread-safe lazy Singleton in Java.\nWhat is double-checked locking? Why is volatile required?',
+hint:'Check null without lock → acquire lock → check null again. volatile prevents instruction reordering that could expose partially-constructed object.',
+answer:'Double-Checked Locking:\n  if (instance == null) {              ← first check (no lock — fast path)\n    synchronized(Cls.class) {\n      if (instance == null)            ← second check (under lock)\n        instance = new Cls();\n    }\n  }\n\nvolatile: without it, JVM may reorder: allocate memory → assign reference → initialize fields. Another thread could see non-null but uninitialized instance.\n\nSimpler: Enum Singleton — serialization-safe, reflection-safe, thread-safe by JVM.\n  enum AppLogger { INSTANCE; ... }\n\nUse for: config, logger, connection pool. Pitfall: hides dependencies → prefer DI in tests.',
+code:'static volatile Config instance;\nstatic Config getInstance(){\n    if(instance==null){\n        synchronized(Config.class){\n            if(instance==null) instance=new Config();\n        }\n    }\n    return instance;\n}\n// Simpler:\nenum AppLogger { INSTANCE;\n    void log(String msg){...}\n}',loci:null},
+{id:'pat02',title:'2. Factory Method vs Abstract Factory',
+q:'What is the difference between Factory Method and Abstract Factory?\nWhen do you use each?',
+hint:'Factory Method: subclass decides ONE type. Abstract Factory: creates a FAMILY of related types — swap factory = swap entire family.',
+answer:'Factory Method:\n  Base class defines abstract factory method.\n  Subclass overrides it to return a specific product.\n  Use: caller shouldn\'t know concrete type; new types added via subclassing.\n  Example: NotificationService.createNotification() overridden by EmailService/SMSService.\n\nAbstract Factory:\n  Factory interface creates a FAMILY of related objects (Button + Checkbox together).\n  Swap the factory object → entire product family swaps (Light→Dark theme).\n  Use: UI toolkits, cross-platform widgets, test-vs-prod infrastructure.\n\nSimple Factory (not GoF): static switch statement — common in interviews, not a pattern.',
+code:'// Abstract Factory\ninterface UIFactory { Button btn(); Checkbox chk(); }\nclass DarkFactory implements UIFactory {\n    public Button btn()  { return new DarkButton(); }\n    public Checkbox chk(){ return new DarkCheckbox(); }\n}\nvoid render(UIFactory f){ f.btn().render(); f.chk().render(); }',loci:null},
+{id:'pat03',title:'3. Builder',
+q:'When do you use Builder instead of a constructor? What is the key benefit?',
+hint:'Many optional parameters → telescoping constructors become unreadable. Builder: fluent API, immutable product.',
+answer:'Problem: constructor with 8 parameters, most optional → hard to read, easy to swap args.\n\nBuilder pattern:\n  Inner static Builder class holds mutable state.\n  Fluent setters return this (chainable).\n  build() validates and returns immutable product.\n\nExample: HttpRequest.Builder("POST", url)\n    .header("Content-Type", "application/json")\n    .body("{...}")\n    .build()\n\nJava: Lombok @Builder, StringBuilder, Stream.Builder.\nUse for: Pizza, HttpRequest, QueryBuilder, complex configs.',
+code:'static class HttpRequest {\n    private final String method, url, body;\n    private HttpRequest(Builder b){method=b.method;url=b.url;body=b.body;}\n    static class Builder {\n        final String method,url; String body="";\n        Builder(String m,String u){method=m;url=u;}\n        Builder body(String b){body=b;return this;}\n        HttpRequest build(){return new HttpRequest(this);}\n    }\n}',loci:null},
+{id:'pat04',title:'4. Adapter',
+q:'You have a VLCPlayer with playVLC() but callers expect play().\nHow does the Adapter pattern solve this? Object vs Class Adapter?',
+hint:'Object Adapter: wraps legacy instance via composition (preferred). Class Adapter: extends legacy class (Java single-inheritance limits this).',
+answer:'Adapter wraps an incompatible interface to match what callers expect.\n\nObject Adapter (composition — preferred):\n  MediaAdapter implements MediaPlayer:\n    wraps VLCPlayer and MP4Player\n    play(file) → routes to vlc.playVLC() or mp4.playMP4()\n\nClass Adapter (inheritance):\n  MediaAdapter extends VLCPlayer implements MediaPlayer\n  — not possible when adapting multiple legacy types\n\nPrefer composition: more flexible, works with multiple legacy types, easier to test.\n\nUse for: integrating third-party libraries, legacy code, plug-in APIs.',
+code:'class MediaAdapter implements MediaPlayer {\n    private final VLCPlayer vlc = new VLCPlayer();\n    private final MP4Player mp4 = new MP4Player();\n    public void play(String f){\n        if(f.endsWith(".vlc")) vlc.playVLC(f);\n        else if(f.endsWith(".mp4")) mp4.playMP4(f);\n    }\n}',loci:null},
+{id:'pat05',title:'5. Decorator',
+q:'How is Decorator different from inheritance for adding behavior?\nHow do you stack decorators?',
+hint:'Decorator implements the same interface and wraps an existing object. Stack: new C(new B(new A(base))) — each adds behavior at runtime.',
+answer:'Decorator adds behavior at RUNTIME without subclassing.\n  → implements same interface as wrapped object\n  → wraps an existing object, delegates to it, adds own behavior\n\nStacking: new WhipCream(new Sugar(new Milk(new SimpleCoffee())))\n  cost = 1.00 + 0.25 + 0.10 + 0.50 = 1.85\n\nvs Inheritance:\n  Inheritance = compile-time, class explosion (MilkSugarCoffee, MilkWhipCoffee...)\n  Decorator = runtime, composable, Open/Closed principle\n\nJava examples: BufferedReader wraps FileReader, GZIPOutputStream wraps FileOutputStream.\n\nUse for: I/O streams, logging wrappers, middleware, feature toggles.',
+code:'abstract class CoffeeDecorator implements Coffee {\n    protected final Coffee coffee;\n    CoffeeDecorator(Coffee c){coffee=c;}\n}\nclass Milk extends CoffeeDecorator {\n    Milk(Coffee c){super(c);}\n    public double cost(){return coffee.cost()+0.25;}\n    public String desc(){return coffee.desc()+", Milk";}\n}',loci:null},
+{id:'pat06',title:'6. Observer (Event Bus / Pub-Sub)',
+q:'One-to-many: when a subject changes, all observers notified.\nHow do you implement subscribe, unsubscribe, and publish?',
+hint:'Map<event, List<Observer>>. subscribe adds to list. publish calls all listeners for that event.',
+answer:'EventBus:\n  Map<String, List<Observer>> listeners\n  subscribe(event, observer): add to list\n  unsubscribe(event, observer): remove from list\n  publish(event, data): for each observer: observer.update(event, data)\n\nJava built-ins: PropertyChangeListener, Flow API (Java 9 reactive streams).\n\nUse for: GUI data binding, game events, microservice event-driven architecture, stock tickers.\n\nvs Strategy: Observer = broadcast to many. Strategy = one replaceable algorithm.',
+code:'class EventBus {\n    Map<String,List<Observer>> listeners=new HashMap<>();\n    void subscribe(String e,Observer o){\n        listeners.computeIfAbsent(e,k->new ArrayList<>()).add(o);}\n    void unsubscribe(String e,Observer o){\n        listeners.getOrDefault(e,List.of()).remove(o);}\n    void publish(String e,Object data){\n        listeners.getOrDefault(e,List.of()).forEach(o->o.update(e,data));}\n}',loci:null},
+{id:'pat07',title:'7. Strategy',
+q:'How does Strategy eliminate if/else chains?\nHow is it different from Template Method?',
+hint:'Strategy = composition (swap algorithm object at runtime). Template Method = inheritance (fixed skeleton, override steps). Prefer Strategy for runtime swapping.',
+answer:'Strategy: encapsulate each algorithm behind a shared interface.\n  Context holds a reference to a Strategy.\n  context.setStrategy(new FasterAlgo()) → swap at runtime.\n\nEliminates:\n  if (type == "fastest") ... else if (type == "shortest") ...\n  → Navigator.navigate() delegates to strategy.route()\n\nvs Template Method:\n  Template = base class defines skeleton; subclasses fill in STEPS (inheritance)\n  Strategy = client provides complete algorithm (composition)\n  → Prefer Strategy: more flexible, testable, Open/Closed\n\nUse for: sorting, payment processors, route-finding (Uber!), discount rules.',
+code:'interface RoutingStrategy { List<String> route(String from, String to); }\nclass Navigator {\n    private RoutingStrategy strategy;\n    Navigator(RoutingStrategy s){strategy=s;}\n    void setStrategy(RoutingStrategy s){strategy=s;}\n    List<String> navigate(String f,String t){return strategy.route(f,t);}\n}',loci:null},
+{id:'pat08',title:'8. Command',
+q:'How does the Command pattern enable undo/redo?\nWhat are the four participants?',
+hint:'Command(execute+undo), ConcreteCommand(stores receiver+params), Invoker(calls execute, maintains history), Receiver(does actual work).',
+answer:'Participants:\n  Command interface: execute(), undo()\n  ConcreteCommand: stores receiver + parameters, implements execute/undo\n  Invoker: calls execute(); pushes to history stack\n  Receiver: object that actually performs the operation\n\nUndo: invoker pops command from history, calls undo().\n\nWriteCommand example:\n  execute: editor.write(text)\n  undo: editor.delete(text.length())\n\nUse for: undo/redo (text editors), job queues, macro recording, transactions, GUI buttons.',
+code:'interface Command{void execute();void undo();}\nclass WriteCommand implements Command{\n    TextEditor editor; String text;\n    public void execute(){editor.write(text);}\n    public void undo(){editor.delete(text.length());}\n}\nclass History{\n    Deque<Command> stack=new ArrayDeque<>();\n    void exec(Command c){c.execute();stack.push(c);}\n    void undo(){if(!stack.isEmpty())stack.pop().undo();}\n}',loci:null},
+{id:'pat09',title:'9. Pattern Quick Reference',
+q:'Interview signal: "adding features without editing existing code" → which pattern?\n"Need undo/job queue" → which? "One change notifies many" → which?',
+hint:'Open/Closed = Strategy or Decorator. Undo/queue = Command. Notify many = Observer. Complex creation = Factory/Builder.',
+answer:'"Adding features without editing existing code" → Strategy or Decorator\n"Object creation logic is complex or conditional" → Factory or Builder\n"Need undo / job queue" → Command\n"One change notifies many" → Observer\n"Legacy API doesn\'t match what we need" → Adapter\n\nCreational: Singleton, Factory Method, Abstract Factory, Builder\nStructural: Adapter, Decorator, Composite, Proxy\nBehavioral: Observer, Strategy, Command, Template Method, Iterator\n\nStrategy vs Decorator: both use composition.\n  Strategy = swappable algorithm (one thing differently)\n  Decorator = add extra behavior on top (stackable wrap)',
+code:'// Composite: File + Directory share same interface\ninterface FSItem{String name();int size();}\nclass File implements FSItem{...}\nclass Dir implements FSItem{\n    List<FSItem> children=new ArrayList<>();\n    public int size(){\n        return children.stream().mapToInt(FSItem::size).sum();}\n}',loci:null}
+]});
+</script>
+<script>
+addTopic({id:'sysdesign',icon:'🏗️',name:'System Design',color:'#ff7b72',cards:[
+{id:'sd01',title:'1. Interview Framework (5 Steps)',
+q:'What are the 5 steps of a system design interview? How long for each?',
+hint:'Clarify → Scale → High-Level → Deep Dive → Trade-offs. (5+5+10+15+10 min)',
+answer:'Step 1 — Clarify Requirements (5 min)\n  Functional: 3-5 core features. Non-functional: scale, latency, consistency, availability.\n  Explicitly name what you are NOT building.\n\nStep 2 — Estimate Scale (5 min)\n  DAU → QPS → storage/year → bandwidth\n\nStep 3 — High-Level Design (10 min)\n  client → LB → API servers → cache → DB\n  Identify: read vs write heavy, sync vs async\n\nStep 4 — Deep Dive (15 min)\n  Interviewer picks 1-2 components: data model, algorithm, bottleneck, failure mode\n\nStep 5 — Trade-offs (10 min)\n  Present options: "X gives A but costs B"\n  Address: SPOF, hot spots, consistency windows, scale-up path',
+code:'Scale estimation template:\n  Users: 100M DAU\n  Reads: 10 req/user/day → 100M*10/86400 ≈ 12K QPS\n  Writes: 1/10 reads → 1.2K QPS\n  Storage: 1K/post → 1.2K*86400*365 ≈ 38 TB/year\n  Bandwidth: 12K QPS * 1KB ≈ 12 MB/s',loci:null},
+{id:'sd02',title:'2. Numbers Every Engineer Must Know',
+q:'RAM vs SSD vs disk speed order of magnitude?\nHow fast is Redis? How many QPS can a single MySQL handle?',
+hint:'RAM 1000× faster than SSD. SSD 1000× faster than disk. Redis 100K+ ops/sec. MySQL 5K-20K QPS with indexes.',
+answer:'Latency:\n  L1 cache: 0.5 ns\n  L2 cache: 7 ns\n  RAM: 100 ns\n  SSD random read: 150 μs\n  HDD seek: 10 ms\n  Network same datacenter: 500 μs\n  Network cross-region: 150 ms\n  Rule: RAM 1000× faster than SSD; SSD 1000× faster than disk.\n\nThroughput:\n  Single server: 10K-50K QPS\n  Redis: 100K+ ops/sec\n  MySQL (with indexes): 5K-20K QPS\n  Kafka: 1M msg/sec per partition\n\nStorage:\n  1 KB = tweet/user record\n  1 MB = 1 photo\n  1 TB = 1M photos',
+code:'Storage quick math:\n  1M users × 1KB = 1 GB\n  1B users × 1KB = 1 TB\n  100M messages/day × 100B = 10 GB/day = 3.6 TB/year\n  Bandwidth = QPS × payload_size\n  100K QPS × 1KB = 100 MB/s ≈ 1 Gbps',loci:null},
+{id:'sd03',title:'3. Caching Patterns',
+q:'What are the four cache patterns? Which is most common?\nWhat is the thundering herd problem and how do you fix it?',
+hint:'Cache-aside (lazy) is most common. Write to DB, invalidate cache (DEL, not SET). Thundering herd: many simultaneous cache misses → DB overload.',
+answer:'Cache-aside (lazy, most common):\n  Read: check cache → miss → query DB → populate cache\n  Write: write to DB → DEL cache key (invalidate, not update — avoids race)\n\nWrite-through: write to DB AND cache atomically → strong consistency, extra write latency\n\nWrite-back: write to cache, async flush to DB → risk of data loss\n\nRead-through: cache fetches from DB on miss (cache layer handles it)\n\nThundering herd: cache expires → 1000 requests all miss → DB overloaded.\nFixes:\n  1. Mutex: first miss gets lock, others wait/serve stale\n  2. Probabilistic early expiry: re-fetch slightly before TTL\n  3. Background async refresh\n\nHot key: one key gets 10× traffic → local in-process LRU + key splitting + jittered TTL',
+code:'// Cache-aside\nString get(String key){\n    String val=redis.GET(key);\n    if(val!=null) return val;\n    val=db.query(key);\n    redis.SET(key,val,EX,3600);\n    return val;\n}\nvoid write(String key,String val){\n    db.write(key,val);\n    redis.DEL(key);  // invalidate, not update\n}',loci:null},
+{id:'sd04',title:'4. Database Selection',
+q:'When do you choose SQL vs each NoSQL option?\nHow do you scale SQL horizontally?',
+hint:'ACID/joins → SQL. Document/flexible schema → MongoDB. Key-value/fast lookup → Redis/DynamoDB. Wide column/write-heavy → Cassandra. Graph → Neo4j.',
+answer:'Decision tree:\n  Need ACID transactions? → SQL (PostgreSQL, MySQL)\n  Document (flexible schema, nested) → MongoDB\n  Key-value (simple lookup, high QPS) → Redis, DynamoDB\n  Wide column (time-series, write-heavy) → Cassandra, HBase\n  Graph (social networks) → Neo4j\n  Full-text search → Elasticsearch\n\nScaling SQL:\n  1. Read replicas → scale reads\n  2. Vertical scaling → bigger machine\n  3. Sharding → scale writes\n    Range-based: user_id range → hot spots\n    Hash-based: hash(user_id) % N → even distribution\n    Directory-based: lookup table → flexible\n\nSharding pitfalls: cross-shard joins, cross-shard transactions, resharding.',
+code:'// Sharding key choice matters:\n// Bad: shard by date → all writes hit today\'s shard\n// Good: shard by hash(user_id) → even distribution\n// Key: shard_id = CRC32(user_id) % num_shards\n//\n// Consistent hashing: virtual nodes on ring\n// Add/remove server → only 1/N keys remapped',loci:null},
+{id:'sd05',title:'5. Kafka / Message Queue',
+q:'Kafka topic, partition, consumer group — what is each?\nAt-least-once vs exactly-once: trade-off?',
+hint:'Partition = unit of parallelism. One consumer per partition per group. At-least-once = idempotent consumers. Exactly-once = higher latency.',
+answer:'Kafka concepts:\n  Topic: logical stream of events\n  Partition: unit of parallelism; ordered within partition\n  Consumer Group: each partition consumed by ONE member of the group\n  Offset: position in partition; consumers commit after processing\n  Retention: messages kept N days regardless of consumption (replay!)\n\nAt-least-once: re-deliver on failure → consumer must be idempotent\nExactly-once: two-phase commit / transactional API → higher latency\n\nKafka vs RabbitMQ:\n  Kafka: fan-out to many consumers, replay, high throughput, audit log\n  RabbitMQ: complex routing, per-message TTL, priority queues, simpler\n\nUse Kafka for: decouple producers/consumers, event sourcing, CDC, analytics pipelines.',
+code:'// Partition parallelism:\n// 3 partitions → 3 consumers max per group\n// Consumer commits offset after processing:\n//   consumer.commitSync()\n// Idempotency: use message key as dedup key\n//   if (processed.contains(msgId)) return;\n//   process(msg);\n//   processed.add(msgId);',loci:null},
+{id:'sd06',title:'6. CAP Theorem & Consistency Models',
+q:'CAP: which two properties can you guarantee during a network partition?\nWhat is the difference between CP and AP systems?',
+hint:'You always need P (partition tolerance). So you choose CP (consistent but may reject requests) or AP (available but may return stale data).',
+answer:'CAP: during a network partition, choose C or A (P is mandatory).\n\nCP (Consistency + Partition tolerance):\n  Rejects requests if can\'t guarantee freshness\n  Use: bank balance, inventory, distributed locks\n  Examples: Zookeeper, HBase\n\nAP (Availability + Partition tolerance):\n  Returns possibly stale data\n  Use: social feed, user profile, shopping cart\n  Examples: Cassandra, DynamoDB (default), CouchDB\n\nConsistency models (weakest → strongest):\n  Eventual → reads may be stale\n  Read-your-writes → see your own writes\n  Monotonic reads → no going backwards\n  Causal → related writes in order\n  Strong/Linearizable → always latest write (quorum)\n\nPACELC: even without partition: Latency vs Consistency trade-off.',
+code:'// Replication approaches:\n// Leader-follower: single writer, multiple readers\n//   → failover needed on leader death\n// Multi-leader: multiple writers, conflict resolution\n//   → last-write-wins, CRDTs, manual merge\n// Leaderless (Dynamo): quorum W+R > N\n//   → highly available, possible stale reads',loci:null},
+{id:'sd07',title:'7. Design: Uber Ride Dispatch',
+q:'Design Uber\'s ride dispatch. What data store holds driver locations?\nWhat is H3? How does the matching engine work?',
+hint:'Redis GEO or H3 hexagonal cells for locations. H3 ring expansion for nearby driver search. ETA scoring for final match.',
+answer:'Scale: 1M concurrent drivers × 1 update/4s = 250K writes/sec\n\nArchitecture:\n  Driver → WebSocket → Location Service → Kafka → Redis H3 index\n  Rider → Dispatch Service → Matching Engine → Driver WebSocket\n\nH3 Hexagonal Cells (Uber\'s approach):\n  World → hex cells at multiple resolutions (res 9 ≈ 0.1 km²)\n  Each driver stored in their current H3 cell in Redis\n  Search: target cell + 6 neighbors (ring-1 expansion)\n  Advantage over geohash: equal area, no edge distortion, clean ring queries\n\nMatching Engine:\n  1. Query available drivers in H3 ring-1 (expand to ring-2 if empty)\n  2. Compute ETA from Maps API for candidates\n  3. Score: ETA_weight×ETA + rating_weight×rating\n  4. Offer to best driver (timeout 10s → next driver)\n\nDriver locations: Redis only (TTL 30s) + async checkpoint to Cassandra',
+code:'// H3 lookup:\nh3_index = h3.latLngToCell(lat,lng,resolution=9)\nneighbors = h3.gridDisk(h3_index,k=1)  // 7 cells\navailable = Redis.SUNION(neighbors.map(c->"cell:"+c))\n\n// Redis GEO alternative:\nGEOADD drivers <lng> <lat> <driver_id>\nGEORADIUS drivers <lat> <lng> 2km ASC COUNT 20',loci:null},
+{id:'sd08',title:'8. Design: News Feed (Fan-out)',
+q:'Fan-out on Write vs Fan-out on Read — trade-offs?\nWhat is the hybrid approach for celebrities?',
+hint:'Write=pre-compute (fast read, expensive write). Read=compute at query time (slow read, cheap write). Hybrid: fan-out on write for normal users, fan-out on read for celebrities.',
+answer:'Fan-out on Write (push):\n  On post: write post_id to all followers\' feed cache\n  Read: O(1) — pre-computed\n  Write: O(N followers) — expensive for 10M-follower celebrities\n\nFan-out on Read (pull):\n  On feed load: fetch from all followees, merge\n  Read: O(N followees) — slow\n  Write: O(1)\n\nHybrid (real solution):\n  if followers < 5000: fan-out on write\n  if celebrity: fan-out on read (merge celebrity posts at read time)\n\nData model:\n  Redis Sorted Set: ZADD user_feed:{uid} <timestamp> <post_id>\n  ZREVRANGE user_feed:123 0 49  ← latest 50 posts\n\nPagination: cursor (last post_id + timestamp) not OFFSET.',
+code:'// Post flow:\nif(poster.followerCount < 5000){\n    // fan-out on write\n    for(Long followerId : followers){\n        redis.zadd("feed:"+followerId, now, postId);\n    }\n} else {\n    // celebrity: skip fan-out, flagged for read-time merge\n    db.save(post);\n}',loci:null},
+{id:'sd09',title:'9. Design: Rate Limiter',
+q:'What are the 5 rate limiting algorithms? Which is Uber\'s choice?\nHow do you make it distributed (multiple API servers)?',
+hint:'Token Bucket: refill at rate R, consume 1 per request. Redis + Lua script for atomic check-and-decrement across servers.',
+answer:'Algorithms:\n  Fixed Window: simple, burst at boundary (2× rate possible)\n  Sliding Window Log: accurate, high memory\n  Sliding Window Counter: accurate, O(1)\n  Token Bucket: allows bursts, smooth (Uber\'s choice)\n  Leaky Bucket: smooth output, drops bursts\n\nToken Bucket:\n  tokens += (now - last_refill) × rate\n  if tokens >= 1: allow, tokens--\n  else: reject 429\n\nDistributed (Redis):\n  Key: rate:{userId}:{window}\n  Lua script (atomic check-and-increment):\n    GET current → if over limit: reject\n    INCR key; EXPIRE key window\n\nFail open (allow all) vs fail closed (reject all) if Redis down.\n  Usually fail open → availability over strict limiting.',
+code:'// Redis Lua (atomic):\nlocal cur=redis.call("GET",KEYS[1])\nif cur and tonumber(cur)>=tonumber(ARGV[1]) then\n  return 0  -- reject\nelse\n  redis.call("INCR",KEYS[1])\n  redis.call("EXPIRE",KEYS[1],ARGV[2])\n  return 1  -- allow\nend',loci:null},
+{id:'sd10',title:'10. Trade-off Cheat Sheet',
+q:'SQL vs NoSQL — choose SQL when?\nWebSocket vs REST — when to use WebSocket?\nKafka vs RabbitMQ — when Kafka?',
+hint:'SQL: ACID, joins. WebSocket: real-time bidirectional. Kafka: fan-out, replay, high throughput.',
+answer:'SQL vs NoSQL: SQL when ACID, complex queries, joins.\nCache invalidation: TTL when writes are infrequent; event-driven when write-heavy.\nFan-out: write-time when most users have few followers.\nConsistency: strong when money/inventory; eventual for social feeds.\nTransport: HTTP REST for request-response; WebSocket for real-time bidirectional.\nQueue: Kafka for fan-out, replay, high throughput; RabbitMQ for complex routing.\nStorage: SQL DB for structured; Blob (S3) for unstructured/large files.\nLocation index: Geohash for simple range; H3 (Uber) for uniform area, ring queries.\n\nUber-specific:\n  Geospatial: H3 hexagonal cells\n  Location: WebSocket + Kafka → Redis (hot) + Cassandra (cold)\n  Matching: H3 ring expansion + ETA scoring\n  Surge: supply/demand per H3 cell, event-driven, WebSocket push',
+code:'// Availability math:\n// 99.9% = 8.7 hrs/year downtime\n// 99.99% = 52 min/year\n// 99.999% = 5.25 min/year\n//\n// Replication lag: async ≈ ms; sync = higher latency\n// Read replicas: good for reads; writes still go to leader\n// Sharding: distributes writes; makes joins hard',loci:null}
+]});
+</script>
+<script>
+addTopic({id:'lld',icon:'🔧',name:'LLD — Coded Problems',color:'#e3b341',cards:[
+{id:'lld01',title:'1. In-Memory File System (Terminal)',
+q:'Design mkdir, cd, ls, pwd, search(regex) on an in-memory file system.\nWhat is the core data structure? What does Node contain?',
+hint:'N-ary tree of Node objects. Node: name, isFile, parent pointer, Map<String,Node> children. FileSystem owns root + current pointer.',
+answer:'Data structure: N-ary tree.\n  Node: name, isFile, content, parent, Map<String,Node> children\n  FileSystem: root node, current node\n\npwd: walk parent pointers to root, collect names, join with "/"\nmkdir: split path on "/", walk/create nodes. computeIfAbsent for each segment.\ncd: resolvePath → update current pointer. Errors: not found, is a file.\nls: list children of target dir, sorted alphabetically, prefix [DIR]/[FILE].\nsearch(regex): DFS from current, Pattern.compile, match child names.\n\nresolvePath: start from root if "/" prefix, else from current.\n  ".." → node.parent (root.parent = root)\n  "." → skip\n\nAll commands return String: "" on success, error message on failure.',
+code:'class Node{\n    String name;boolean isFile;\n    Node parent;Map<String,Node> ch=new HashMap<>();\n    Node(String n,boolean f,Node p){name=n;isFile=f;parent=p;}\n}\nclass FileSystem{\n    Node root=new Node("/",false,null),cur;\n    FileSystem(){root.parent=root;cur=root;}\n\n    String pwd(){\n        if(cur==root)return"/";\n        Deque<String> p=new ArrayDeque<>();\n        for(Node n=cur;n!=root;n=n.parent)p.push(n.name);\n        return"/"+String.join("/",p);\n    }\n    Node resolve(String path){\n        Node b=path.startsWith("/")?root:cur;\n        for(String s:path.split("/")){\n            if(s.isEmpty()||s.equals("."))continue;\n            if(s.equals("..")){b=b.parent;continue;}\n            if(!b.ch.containsKey(s))return null;\n            b=b.ch.get(s);}\n        return b;\n    }\n    String mkdir(String path){\n        Node b=path.startsWith("/")?root:cur;\n        for(String s:path.split("/")){\n            if(s.isEmpty()||s.equals("."))continue;\n            if(s.equals("..")){b=b.parent;continue;}\n            final Node par=b;\n            b.ch.computeIfAbsent(s,k->new Node(k,false,par));\n            b=b.ch.get(s);}\n        return"";\n    }\n    String cd(String path){\n        Node t=resolve(path);\n        if(t==null)return"No such file: "+path;\n        if(t.isFile)return"Not a dir: "+path;\n        cur=t;return"";\n    }\n    String ls(String path){\n        Node t=path.isEmpty()?cur:resolve(path);\n        List<String> names=new ArrayList<>(t.ch.keySet());\n        Collections.sort(names);\n        StringBuilder sb=new StringBuilder();\n        for(String nm:names){\n            if(sb.length()>0)sb.append("\\n");\n            Node c=t.ch.get(nm);\n            sb.append(c.isFile?"[FILE] ":"[DIR] ").append(nm);}\n        return sb.toString();\n    }\n    String search(String regex){\n        List<String> res=new ArrayList<>();\n        dfs(cur,Pattern.compile(regex),res,pwd());\n        Collections.sort(res);\n        return res.isEmpty()?"No matches":String.join("\\n",res);\n    }\n    void dfs(Node n,Pattern p,List<String> r,String path){\n        for(Node c:n.ch.values()){\n            String cp=path.equals("/")?"/"+c.name:path+"/"+c.name;\n            if(p.matcher(c.name).find())r.add(cp);\n            if(!c.isFile)dfs(c,p,r,cp);}}\n}',loci:null},
+{id:'lld02',title:'2. LRU Cache',
+q:'Design an O(1) get/put LRU Cache.\nWhich two data structures combine to achieve O(1)?',
+hint:'HashMap (key → node) + Doubly Linked List (access order). Head = MRU, Tail = LRU. On access: remove node and move to head. On eviction: remove tail.',
+answer:'HashMap<key, DLL Node> + Doubly Linked List.\n  Head ← MRU end, Tail ← LRU end.\n\nget(key):\n  if not in map: return -1\n  move node to head (remove + addToHead)\n  return node.value\n\nput(key, value):\n  if key exists: update value, move to head\n  else:\n    create new node, add to head, put in map\n    if size > capacity: remove tail node, remove from map\n\nDLL operations (all O(1)):\n  addToHead: insert after dummy head\n  removeNode: update prev/next pointers\n  removeTail: return node before dummy tail\n\nJava shortcut: LinkedHashMap with accessOrder=true.',
+code:'class LRUCache{\n    class Node{int key,val;Node prev,next;\n        Node(int k,int v){key=k;val=v;}}\n    int cap;\n    Map<Integer,Node> map=new HashMap<>();\n    Node head=new Node(0,0),tail=new Node(0,0);\n    LRUCache(int cap){this.cap=cap;head.next=tail;tail.prev=head;}\n\n    private void addHead(Node n){\n        n.next=head.next;n.prev=head;\n        head.next.prev=n;head.next=n;\n    }\n    private void remove(Node n){\n        n.prev.next=n.next;n.next.prev=n.prev;\n    }\n    private Node removeTail(){Node n=tail.prev;remove(n);return n;}\n\n    public int get(int key){\n        if(!map.containsKey(key))return -1;\n        Node n=map.get(key);remove(n);addHead(n);return n.val;\n    }\n    public void put(int key,int val){\n        if(map.containsKey(key))remove(map.get(key));\n        Node n=new Node(key,val);addHead(n);map.put(key,n);\n        if(map.size()>cap){Node t=removeTail();map.remove(t.key);}\n    }\n}',loci:null},
+{id:'lld03',title:'3. Parking Lot',
+q:'Design a Parking Lot supporting multiple levels, vehicle sizes, and ticket-based pricing.\nWhat are the key classes?',
+hint:'ParkingLot → Level[] → Spot[]. Spot has SpotType (SMALL/MEDIUM/LARGE). Vehicle has VehicleType. Ticket stores entry time + spot. ParkingLot.park() finds nearest available spot.',
+answer:'Classes:\n  Vehicle (abstract): licensePlate, VehicleType\n  Car / Motorcycle / Truck (extends Vehicle)\n  SpotType: MOTORCYCLE, COMPACT, LARGE\n  ParkingSpot: spotType, isOccupied, Vehicle\n  Level: List<ParkingSpot>, floor number\n  Ticket: Vehicle, ParkingSpot, entryTime\n  ParkingLot: Level[], park(vehicle), unpark(ticket), calculateFee(ticket)\n\npark(vehicle):\n  for each level: find first available spot matching vehicle size\n  create Ticket(vehicle, spot, now)\n  mark spot occupied\n\nunpark(ticket):\n  mark spot free\n  fee = (now - entryTime) * hourlyRate\n\nSizing rule: Motorcycle fits MOTORCYCLE/COMPACT/LARGE. Car fits COMPACT/LARGE. Truck fits LARGE only.\n\nThread safety: synchronized on spot reservation if multi-threaded.',
+code:'enum SpotType { MOTORCYCLE, COMPACT, LARGE }\nclass ParkingSpot {\n    SpotType type; boolean occupied; Vehicle vehicle;\n    boolean canFit(Vehicle v){\n        return type.ordinal()>=v.getRequiredSpot().ordinal();\n    }\n}\nclass ParkingLot {\n    List<Level> levels;\n    Ticket park(Vehicle v){\n        for(Level l:levels)\n            for(ParkingSpot s:l.spots)\n                if(!s.occupied&&s.canFit(v)){\n                    s.occupied=true; s.vehicle=v;\n                    return new Ticket(v,s,Instant.now());\n                }\n        return null; // full\n    }\n}',loci:null},
+{id:'lld04',title:'4. Elevator System',
+q:'Design an elevator controller for a building with N elevators.\nHow do you pick which elevator to send? What states does an elevator have?',
+hint:'ElevatorState: IDLE, MOVING_UP, MOVING_DOWN. Dispatcher uses SCAN (look) algorithm: serve requests in current direction of travel, reverse when no more in that direction.',
+answer:'Classes:\n  Elevator: id, currentFloor, direction, ElevatorState, TreeSet<Integer> upQueue, downQueue\n  ElevatorController: List<Elevator>, requestElevator(floor, direction)\n  Request: floor, direction (UP/DOWN)\n\nSCAN (Look) algorithm (like disk scheduling):\n  If moving UP: serve all floors > currentFloor in upQueue, then switch to DOWN\n  If moving DOWN: serve all floors < currentFloor in downQueue, then switch to UP\n  IDLE: pick direction based on pending requests\n\nDispatcher: pick elevator with minimum estimated wait time.\n  cost = |elevator.currentFloor - requestFloor| + penalty if direction mismatch\n\nStep simulation:\n  Each tick: elevator moves ±1 floor, opens door if floor in queue, removes from queue.\n\nFor interviews: simpler approach — nearest idle elevator, or round-robin.',
+code:'class Elevator {\n    int id, floor;\n    Direction dir=Direction.IDLE;\n    TreeSet<Integer> stops=new TreeSet<>();\n    void addStop(int f){stops.add(f);}\n    void step(){\n        if(stops.isEmpty()){dir=Direction.IDLE;return;}\n        if(dir==Direction.UP||dir==Direction.IDLE){\n            Integer next=stops.ceiling(floor+1);\n            if(next!=null){floor++;if(floor==next)stops.remove(next);}\n            else dir=Direction.DOWN;\n        } else {\n            Integer next=stops.floor(floor-1);\n            if(next!=null){floor--;if(floor==next)stops.remove(next);}\n            else dir=Direction.UP;\n        }\n    }\n}',loci:null},
+{id:'lld05',title:'5. Vending Machine',
+q:'Design a Vending Machine with states: IDLE, COIN_INSERTED, DISPENSING.\nHow do you model the state transitions cleanly?',
+hint:'State pattern: each state is an object with methods (insertCoin, selectProduct, cancel). Machine delegates to current state. Transitions update machine.setState().',
+answer:'States: IDLE → COIN_INSERTED → DISPENSING → IDLE\n\nState pattern:\n  interface VendingState { insertCoin(int); selectProduct(String); cancel(); }\n  IdleState: insertCoin → switch to CoinInsertedState\n  CoinInsertedState: selectProduct → check stock/balance → switch to Dispensing; cancel → refund\n  DispensingState: dispense item → switch to Idle\n\nVendingMachine:\n  Map<String, Item> inventory (name → Item{price, quantity})\n  int balance (coins inserted so far)\n  VendingState currentState\n\nAlternative (without State pattern):\n  enum + switch — simpler for small state machines\n\nEdge cases: insufficient balance, out of stock, exact change only.',
+code:'interface VendingState{\n    void insertCoin(int cents);\n    void selectProduct(String code);\n    void cancel();\n}\nclass CoinInsertedState implements VendingState {\n    VendingMachine m;\n    public void selectProduct(String code){\n        Item item=m.inventory.get(code);\n        if(item==null){System.out.println("Invalid");return;}\n        if(m.balance<item.price){System.out.println("Add more coins");return;}\n        if(item.qty==0){System.out.println("Out of stock");return;}\n        item.qty--; m.balance-=item.price;\n        m.dispense(item); m.setState(new IdleState(m));\n    }\n}',loci:null},
+{id:'lld06',title:'6. Ride Sharing (Uber LLD)',
+q:'Design the core objects for a ride-sharing system.\nWhat are the key classes and their relationships?',
+hint:'User(Rider/Driver), Trip, Location, TripStatus enum. RideService: requestRide, acceptRide, completeRide. MatchingService: finds nearest driver.',
+answer:'Classes:\n  User: id, name, phone\n  Rider extends User: List<Trip> history\n  Driver extends User: Vehicle, DriverStatus (AVAILABLE/ON_TRIP/OFFLINE), Location\n  Vehicle: plateNumber, VehicleType, model\n  Location: lat, lng\n  Trip: id, Rider, Driver, pickup, destination, TripStatus, fare, startTime, endTime\n  TripStatus: REQUESTED, ACCEPTED, IN_PROGRESS, COMPLETED, CANCELLED\n\nServices:\n  RideService:\n    requestRide(rider, pickup, dest) → creates Trip(REQUESTED)\n    acceptRide(driver, tripId) → Trip→ACCEPTED, driver→ON_TRIP\n    startTrip(tripId) → Trip→IN_PROGRESS\n    completeTrip(tripId) → Trip→COMPLETED, calcFare, driver→AVAILABLE\n    cancelTrip(tripId) → Trip→CANCELLED\n\n  MatchingService:\n    findNearestDriver(pickup) → list drivers by distance, filter AVAILABLE\n\n  FareCalculator:\n    baseFare + (distance × perKmRate) + (duration × perMinRate) × surgeMultiplier',
+code:'class Trip {\n    String id; Rider rider; Driver driver;\n    Location pickup, destination;\n    TripStatus status; double fare;\n    Instant startTime, endTime;\n}\nclass RideService {\n    Map<String,Trip> trips=new HashMap<>();\n    Trip requestRide(Rider r, Location pickup, Location dest){\n        Trip t=new Trip(UUID.randomUUID(),r,pickup,dest);\n        t.status=TripStatus.REQUESTED;\n        trips.put(t.id,t);\n        Driver d=matchingService.findNearest(pickup);\n        if(d!=null) offerTrip(d,t);\n        return t;\n    }\n}',loci:null},
+{id:'lld07',title:'7. Snake and Ladder / Board Game',
+q:'Design a Snake and Ladder game.\nWhat is the clean way to model snakes/ladders so the move logic stays simple?',
+hint:'Map<int,int> portals where key=start, value=end. If end>start it\'s a ladder, if end<start it\'s a snake. After each dice roll: newPos = portals.getOrDefault(newPos, newPos).',
+answer:'Classes:\n  Board: size (e.g. 100), Map<Integer,Integer> portals\n  Player: name, currentPosition\n  Dice: roll() → random 1-6\n  Game: Board, List<Player>, currentPlayerIndex\n\nGame loop:\n  while no winner:\n    player = players[currentIndex]\n    roll = dice.roll()\n    newPos = player.pos + roll\n    if newPos > board.size: skip (or stay)\n    newPos = board.portals.getOrDefault(newPos, newPos)  ← handles both snakes and ladders\n    player.pos = newPos\n    if player.pos == board.size: player wins!\n    advance currentIndex\n\nBoard setup:\n  ladders: {4→14, 9→31, 20→38, ...}\n  snakes: {17→7, 54→34, 62→19, ...}\n  merge into single portals map',
+code:'class Board {\n    int size;\n    Map<Integer,Integer> portals=new HashMap<>();\n    int move(int from, int steps){\n        int newPos=from+steps;\n        if(newPos>size) return from;\n        return portals.getOrDefault(newPos,newPos);\n    }\n}\nclass Game {\n    void play(){\n        while(true){\n            Player p=players.get(current%players.size());\n            int steps=dice.roll();\n            p.pos=board.move(p.pos,steps);\n            System.out.println(p.name+" → "+p.pos);\n            if(p.pos==board.size){System.out.println(p.name+" wins!");break;}\n            current++;\n        }\n    }\n}',loci:null},
+{id:'lld08',title:'8. LLD Interview Approach',
+q:'What are the 5 steps to solve any LLD problem in an interview?\nWhat should you clarify before drawing classes?',
+hint:'Clarify → Use Cases → Core Classes → Relationships → Patterns. Ask: read/write ratio, concurrency needed, scale, must-have vs nice-to-have features.',
+answer:'5-step approach:\n\n1. Clarify requirements (2 min)\n   - What are the core use cases? (3-5 only)\n   - Single user or multi-user? Thread-safe?\n   - Any scale considerations? (usually in-memory is fine)\n\n2. Identify entities / nouns (2 min)\n   - Nouns from use cases → candidate classes\n   - Verbs → candidate methods\n\n3. Define relationships (3 min)\n   - IS-A (inheritance) vs HAS-A (composition)\n   - One-to-many, many-to-many associations\n   - Identify which class owns which\n\n4. Define interfaces and key methods (5 min)\n   - Write method signatures before implementation\n   - Return types, parameters, exceptions\n\n5. Apply patterns if needed (5 min)\n   - State machine → State pattern\n   - Swappable algorithm → Strategy\n   - Notify many → Observer\n   - Build complex object → Builder\n\nRed flags to avoid:\n  - God classes that do everything\n   - String-typed enums (use enum)\n   - Missing null checks at boundaries',
+code:'// Template for any LLD:\n// 1. Enums first (types, statuses)\nenum Status { REQUESTED, ACTIVE, DONE, CANCELLED }\n// 2. Value objects (immutable data)\nrecord Location(double lat, double lng) {}\n// 3. Entities (have identity + state)\nclass Order { String id; Status status; ... }\n// 4. Services (orchestrate entities)\nclass OrderService { Order create(...); void update(...); }\n// 5. Repository (storage abstraction)\ninterface OrderRepo { void save(Order o); Order findById(String id); }',loci:null}
+]});
+</script>
+</body>
+</html>

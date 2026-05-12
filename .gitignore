@@ -1,0 +1,60 @@
+# ========================
+# Java Compiled Output
+# ========================
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+out/
+target/
+
+# ========================
+# C++ Build Artifacts
+# ========================
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+build/
+cmake-build-*/
+
+# ========================
+# IDE & Editor Files
+# ========================
+.idea/
+*.iml
+*.iws
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.classpath
+.project
+.settings/
+*.swp
+*.swo
+
+# ========================
+# OS Generated Files
+# ========================
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ========================
+# Logs & Temp Files
+# ========================
+*.log
+*.tmp
+*.temp
+
+# ========================
+# Local Tool State
+# ========================
+.superpowers/
