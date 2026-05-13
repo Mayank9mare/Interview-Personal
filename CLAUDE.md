@@ -45,6 +45,12 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   expense-rule-engine/      ExpenseRuleEngine.java
   currency-arbitrage/       CurrencyArbitrage.cpp  ← DSA, so C++
 
+/rubrik/                    ← Rubrik-specific LLD/concurrency problems (Java)
+  job-scheduler/            JobScheduler.java
+  task-dependency/          TaskDependencyExecutor.java
+  memory-block-tracker/     MemoryBlockTracker.java
+  dems-and-reps/            DemsAndReps.java
+
 /<other-lld-folders>/       ← LLD problems (Java), one folder per problem
 
 SystemDesign.md             ← System design reference notes
@@ -86,6 +92,37 @@ questions.md                ← Problem list / interview question log
 ### Rippling — Expense Rule Engine
 - `@FunctionalInterface Rule` → lambdas or named classes both work.
 - `validate()` = fail-fast; `validateAll()` = collect all violations; `validateBatch(list)` = per-expense map.
+
+### Rubrik — Interview Round Structure
+- **Rubrik's system coding round explicitly bans** `BlockingQueue`, `ConcurrentHashMap`, and other concurrent collections. Build thread safety from raw primitives: `ReentrantLock`, `Condition`, `synchronized`, `wait`/`notifyAll`.
+- Debugging round: given broken multithreaded code (Producer-Consumer or banking app), find race conditions and fix them.
+- DSA round: LeetCode Medium (Google/MS style) — one round, nothing Rubrik-specific.
+- Codezym has **zero** Rubrik-tagged problems (confirmed).
+
+### Rubrik — Job Scheduler
+- `PriorityQueue<ScheduledTask>` ordered by `triggerMs`; single dispatcher thread; fixed worker `ExecutorService`.
+- `schedule(task, delayMs)` = one-shot; `scheduleAtFixedRate(task, initMs, periodMs)` = periodic.
+- Dispatcher sleeps with `condition.awaitNanos(waitMs * 1_000_000L)`; a newly enqueued earlier task calls `signal()` to wake it.
+- Periodic tasks re-enqueue themselves inside the worker callback after each run.
+- Lock used: `ReentrantLock` + `Condition ready` (no `DelayQueue`).
+
+### Rubrik — Task Dependency Executor
+- DAG of tasks; each `TaskNode` has `volatile int pendingDeps` (= number of unfinished dependencies).
+- On task completion: `synchronized(dep) { --dep.pendingDeps; }` then submit dep to pool if it hits 0.
+- Shared `CountDownLatch(total tasks)` — `execute()` blocks on `await()`.
+- Cycle detection via DFS before execution starts; throws `IllegalStateException` on cycle.
+
+### Rubrik — Memory Block Tracker
+- `TreeMap<Integer,Integer>` (start → end) always maintained in fully-merged form.
+- `markChanged(s, e)`: walk map with `floorKey(end+1)` absorbing all overlapping/adjacent ranges, then insert merged range. Adjacent = gap of 0 between blocks (e.g. [1,4]+[5,7] → [1,7]).
+- Thread safety: `ReentrantReadWriteLock` — many concurrent readers, exclusive writers.
+
+### Rubrik — Democrats & Republicans (Shared Bathroom)
+- Invariant: `democratsInside > 0 → republicansInside == 0` and vice versa.
+- Two `Condition`s on one fair `ReentrantLock`: `demTurn`, `repTurn`.
+- `enter()`: increment waiting count, `await()` while opposite party is inside, then decrement waiting and increment inside.
+- `exit()`: decrement inside; if reaches 0 → `signalAll()` on opposite party's condition (if any waiting), else own.
+- Fair lock (`new ReentrantLock(true)`) prevents starvation at the lock level.
 
 ### Rippling — Currency Arbitrage (C++)
 - Transform: edge weight = `-ln(rate)`; profitable cycle (product > 1) = negative cycle (sum < 0).
