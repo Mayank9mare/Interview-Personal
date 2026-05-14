@@ -45,6 +45,12 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   expense-rule-engine/      ExpenseRuleEngine.java
   currency-arbitrage/       CurrencyArbitrage.cpp  ← DSA, so C++
 
+/google/                    ← Google-specific LLD problems (Java)
+  logger/                   LoggerMessagePrinter.java
+  lru-cache-ttl/            LRUCacheWithTTL.java
+  search-autocomplete/      SearchAutocomplete.java
+  restaurant-waitlist/      RestaurantWaitlist.java
+
 /rubrik/                    ← Rubrik-specific LLD/concurrency problems (Java)
   job-scheduler/            JobScheduler.java
   task-dependency/          TaskDependencyExecutor.java
@@ -92,6 +98,39 @@ questions.md                ← Problem list / interview question log
 ### Rippling — Expense Rule Engine
 - `@FunctionalInterface Rule` → lambdas or named classes both work.
 - `validate()` = fail-fast; `validateAll()` = collect all violations; `validateBatch(list)` = per-expense map.
+
+### Google — Interview Round Structure
+- Typically 4–5 rounds: 2–3 DSA coding, 1 system design, 1 behavioural/Googleyness.
+- DSA: LeetCode Medium–Hard; DP, Graph, Line Sweep are important topics.
+- One round may ask you to implement a class with multiple methods (LLD-lite) rather than a single function.
+- Interviewers rate SH / H / LH / LNH / NH / SNH. Trade-offs + edge cases can bump a H to SH.
+- Codezym has Google-tagged problems (DSA-style, not OOP LLD).
+
+### Google — Logger Message Printer
+- **Variant A** (rate limiter, LeetCode 359): `HashMap<msg, lastTimestamp>`; print only if `timestamp - last >= 10`.
+- **Variant B** (request tracker, onsite confirmed): `startReq(id, t)` / `finishReq(id)` / `printFinished()`.
+  - Min-heap on `startTime`; drain while `heap.peek().finished == true` — guarantees no gap in start-time order.
+  - Classic out-of-order completion: D finishes first but can't print until A (earliest) finishes.
+
+### Google — LRU Cache with TTL
+- Standard DLL + HashMap LRU, extended with `expireAt = currentTimeMillis() + ttlMs` per node.
+- `get`: if expired → evict node, return -1 (lazy expiry — no background thread).
+- `put`: on capacity overflow, evict LRU tail (whether or not it's expired — it's the least recently used).
+- `cleanup()`: explicit full sweep to purge all stale entries (call proactively if needed).
+- TTL refreshed on re-`put` of existing key.
+
+### Google — Search Autocomplete (Trie)
+- Trie where **each TrieNode stores `Map<sentence, freq>`** for all sentences passing through it.
+  - Avoids DFS to leaves on every query; top-k sort happens at the prefix node directly.
+- `addSentence(s, count)`: walk each character, `node.freq.merge(s, count, Integer::sum)` at each node.
+- `input('#')`: records current typed string, resets buffer, returns `[]`.
+- Ranking: frequency desc, then lexicographic asc; `stream().sorted().limit(3)`.
+
+### Google — Restaurant Waitlist
+- `LinkedList<Party>` FIFO + `HashMap<name, Party>` for O(1) lookup and duplicate detection.
+- `seatNextFitting(capacity)`: linear scan from front, seat first party whose `size ≤ capacity` (first-fit, skips oversized parties).
+- `removeParty(name)`: cancellation — O(n) `queue.remove(p)`; mention O(1) upgrade via `LinkedHashMap` if asked.
+- `estimatedWaitTime(name, avgMin)`: `(position - 1) × avgMin`.
 
 ### Rubrik — Interview Round Structure
 - **Rubrik's system coding round explicitly bans** `BlockingQueue`, `ConcurrentHashMap`, and other concurrent collections. Build thread safety from raw primitives: `ReentrantLock`, `Condition`, `synchronized`, `wait`/`notifyAll`.
