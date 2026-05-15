@@ -104,7 +104,7 @@ questions.md                ← Problem list / interview question log
 - DSA: LeetCode Medium–Hard; DP, Graph, Line Sweep are important topics.
 - One round may ask you to implement a class with multiple methods (LLD-lite) rather than a single function.
 - Interviewers rate SH / H / LH / LNH / NH / SNH. Trade-offs + edge cases can bump a H to SH.
-- Codezym has Google-tagged problems (DSA-style, not OOP LLD).
+- Codezym (`https://www.codezym.com/lld/google`) has **both** LLD and DSA problems for Google, mixed in one table. Rows tagged `Google DS & Algo` are DSA; rows tagged `Google LLD` (with a Design Pattern column) are LLD.
 
 ### Google — Logger Message Printer
 - **Variant A** (rate limiter, LeetCode 359): `HashMap<msg, lastTimestamp>`; print only if `timestamp - last >= 10`.
