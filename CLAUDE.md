@@ -63,6 +63,11 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   memory-block-tracker/     MemoryBlockTracker.java
   dems-and-reps/            DemsAndReps.java
 
+/slice/                     ← Slice-specific LLD problems (Java) + DSA (C++)
+  SliceDSA.cpp              — Linked List, Stack, Binary Tree, Arrays/Greedy, Graph
+  expense-sharing/          ExpenseSharing.java
+  task-scheduler/           TaskScheduler.java
+
 /<other-lld-folders>/       ← LLD problems (Java), one folder per problem
 
 SystemDesign.md             ← System design reference notes
@@ -206,7 +211,36 @@ questions.md                ← Problem list / interview question log
 - Why not `TreeMap<timestamp, count>`? Circular buffer is O(1) per op vs O(log n), and memory is bounded to exactly `windowSeconds` slots.
 - Complexity: O(1) hit, O(windowSeconds) getHits (full buffer scan), O(windowSeconds) space.
 
+### Slice — Interview Round Structure
+- Online Assessment: HackerRank, ~105 min — 15 MCQs (aptitude/quant) + 2 medium-hard coding problems.
+- Technical Round 1 (~1h): DSA fundamentals — linked list, stack, tree problems + project discussion.
+- Technical Round 2 (~1h20m): Harder DSA (rotated search, topological sort) + CS concepts (B-Tree, ACID, OOP pillars, indexing).
+- Machine Coding Round (SDE-2, 90 min virtual): design + implement a full working application; must run and be tested.
+  - Most repeated: Expense Sharing (EQUAL/EXACT/PERCENT), Extended Task Scheduler (TICK/UNDO/TASK AT).
+  - Expectation: runnable code; interviewer asks you to justify DB choice and walk through design.
+- DSA commonly asked from Striver's SDE sheet: Reverse LL, Cycle Detection, LCA, Max Path Sum, Search Rotated Array, Remove K Digits.
+- HR/Managerial: sometimes includes a coding puzzle (e.g. Task Scheduler) alongside behavioural questions.
+
+### Slice — Expense Sharing
+- `Map<String, Double> netBalance` per user: positive = owed to them, negative = they owe.
+- Balance update rule: for all participants debit their share; then credit payer the full amount. Works whether payer is or isn't a participant.
+- EQUAL rounding: `base = floor(amount*100/n)/100`; first participant gets `amount - base*(n-1)` (the remainder cent).
+- EXACT: validate that provided amounts sum to total (within $0.01); throw otherwise.
+- PERCENT: validate percentages sum to 100; multiply each by amount/100 and round to 2dp.
+- Complexity: O(p) per addExpense where p = number of participants; O(u) showAllBalances.
+
+### Slice — Task Scheduler (Extended)
+- `TreeMap<Integer, List<String>> schedule` keeps pending tasks sorted by time: O(log n) add, O(1) tick execution (just `remove(currentTime)`).
+- `Deque<String[]> history` acts as undo stack: each entry is [taskId, scheduledTime].
+- UNDO: peek history; if scheduledTime <= currentTime the task was already executed — report and skip. Otherwise remove from schedule.
+- TICK: increment time; remove and execute schedule.get(currentTime) if present.
+- Complexity: O(log n) addTask, O(k) tick where k = tasks due at that time, O(log n) undo.
+
 ## Git
+- Remote: `https://github.com/Mayank9mare/Interview-Personal.git`
+- Branch: `main`
+- Push after every meaningful addition or conversion.
+- Commit style: short imperative subject, body explains *why* not *what*.
 - Remote: `https://github.com/Mayank9mare/Interview-Personal.git`
 - Branch: `main`
 - Push after every meaningful addition or conversion.
