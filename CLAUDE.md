@@ -56,6 +56,8 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   unix-find/                FileSearch.java
   pizza-pricing/            PizzaPricing.java
   hit-counter/              HitCounter.java
+  parking-lot/              ParkingLot.java
+  locker-system/            LockerSystem.java
 
 /rubrik/                    ← Rubrik-specific LLD/concurrency problems (Java)
   job-scheduler/            JobScheduler.java
@@ -210,6 +212,24 @@ questions.md                ← Problem list / interview question log
 - `ReentrantReadWriteLock`: concurrent reads (getHits) are non-blocking; only writes (hit) are exclusive.
 - Why not `TreeMap<timestamp, count>`? Circular buffer is O(1) per op vs O(log n), and memory is bounded to exactly `windowSeconds` slots.
 - Complexity: O(1) hit, O(windowSeconds) getHits (full buffer scan), O(windowSeconds) space.
+
+### Amazon — Parking Lot
+- OOP hierarchy: `Vehicle(type, plate)` + `ParkingSpot(spotId, size, floorNum)` + `ParkingFloor` + `ParkingTicket`.
+- `ParkingFloor` maintains `EnumMap<SpotSize, Queue<ParkingSpot>>` available queues — O(1) assignment, no linear scan.
+- Vehicle-to-spot preference (smallest first for utilisation): Motorcycle→Small,Medium,Large; Car→Medium,Large; Bus→Large.
+- `park()` iterates fitting sizes × floors; first non-empty queue wins. Returns null if lot is full for that vehicle type.
+- `unpark(ticket)` uses `ticket.spot.floorNum` to return the spot to the exact right floor queue — O(1).
+- Follow-up "make it thread-safe": add `ReentrantReadWriteLock` per floor (reads are `getAvailableCount`, writes are `park`/`unpark`).
+- Complexity: O(1) park/unpark (bounded iteration over ≤3 sizes × floors), O(floors) getAvailableCount.
+
+### Amazon — Locker System
+- `EnumMap<LockerSize, Queue<Locker>>` available queues — O(1) assignment of smallest fitting locker.
+- `codeToLocker` (HashMap) for O(1) `openLocker(code)` lookup; `packageToLocker` for O(1) cancellation/expiry.
+- Fitting sizes (smallest first): SMALL→S,M,L; MEDIUM→M,L; LARGE→L only.
+- Expiry: `releaseExpired(currentDay)` sweeps `packageToLocker`; frees any locker where `currentDay - assignedDay >= maxHoldDays`.
+- `freeLocker(locker)`: clears all fields and re-enqueues — used by both `openLocker` and `releaseExpired`.
+- Follow-up "concurrent access": one `ReentrantLock` per locker size (finer grain than a single global lock).
+- Complexity: O(1) assign/open, O(n) releaseExpired where n = currently assigned lockers.
 
 ### Slice — Interview Round Structure
 - Online Assessment: HackerRank, ~105 min — 15 MCQs (aptitude/quant) + 2 medium-hard coding problems.
