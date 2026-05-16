@@ -136,9 +136,9 @@ public class ExpenseSharing {
 
         // Debit each participant their share, then credit the payer the full amount.
         for (Map.Entry<String, Double> e : shares.entrySet()) {
-            netBalance.merge(e.getKey(), -e.getValue(), Double::sum);
+            netBalance.put(e.getKey(), netBalance.get(e.getKey()) - e.getValue());
         }
-        netBalance.merge(paidBy, amount, Double::sum);
+        netBalance.put(paidBy, netBalance.get(paidBy) + amount);
     }
 
     /**

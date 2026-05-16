@@ -6,7 +6,234 @@ import java.util.concurrent.locks.*;
 public class Concurrency {
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 1. Producer-Consumer — BlockingQueue as the shared buffer
+    // 1. Thread Creation — three ways to start a thread
+    // ─────────────────────────────────────────────────────────────────────────
+    static void threadCreationDemo() throws InterruptedException {
+        // (a) extend Thread
+        Thread t1 = new Thread() {
+            @Override public void run() {
+                System.out.println("Extended Thread: " + Thread.currentThread().getName());
+            }
+        };
+
+        // (b) implement Runnable
+        Thread t2 = new Thread(new Runnable() {
+            @Override public void run() {
+                System.out.println("Runnable Thread: " + Thread.currentThread().getName());
+            }
+        });
+
+        // (c) lambda (most common today)
+        Thread t3 = new Thread(() -> System.out.println("Lambda Thread: " + Thread.currentThread().getName()));
+
+        t1.start(); t2.start(); t3.start();
+        t1.join(); t2.join(); t3.join(); // main blocks until all three finish
+
+        // Thread properties
+        Thread t4 = new Thread(() -> {
+            System.out.println("Daemon: "   + Thread.currentThread().isDaemon());
+            System.out.println("Priority: " + Thread.currentThread().getPriority());
+        });
+        t4.setDaemon(true);                  // JVM exits when only daemon threads remain
+        t4.setPriority(Thread.MAX_PRIORITY); // hint only; scheduler may ignore
+        t4.start();
+        t4.join();
+
+        // interrupt — sets the interrupted flag; thread must cooperate and check it
+        Thread t5 = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) { /* busy work */ }
+            System.out.println("t5 interrupted gracefully");
+        });
+        t5.start();
+        Thread.sleep(10);
+        t5.interrupt(); // sets flag; if t5 is in sleep/wait, throws InterruptedException
+        t5.join();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 2. synchronized — intrinsic (monitor) lock
+    //    synchronized method     — locks on 'this' (or Class for static methods)
+    //    synchronized(obj) block — locks on obj; prefer over method for narrower sections
+    //    Reentrant: same thread can re-enter a synchronized block it already holds
+    // ─────────────────────────────────────────────────────────────────────────
+    static class Counter {
+        private int count = 0;
+
+        synchronized void increment() { count++; }  // locks on 'this'
+
+        void decrement() {
+            synchronized (this) { count--; }        // block form — same effect here
+        }
+
+        synchronized int getCount() { return count; }
+
+        private static int instances = 0;
+        static synchronized void trackInstance() { instances++; } // locks on Counter.class
+    }
+
+    static void synchronizedDemo() throws InterruptedException {
+        Counter counter = new Counter();
+        Thread inc = new Thread(() -> { for (int i = 0; i < 1000; i++) counter.increment(); });
+        Thread dec = new Thread(() -> { for (int i = 0; i < 500;  i++) counter.decrement(); });
+        inc.start(); dec.start();
+        inc.join();  dec.join();
+        System.out.println("Counter: " + counter.getCount()); // always 500
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 3. wait / notify / notifyAll — classic monitor pattern
+    //    Must be called inside a synchronized block on the SAME monitor object.
+    //    wait()      — atomically releases the lock and suspends the thread
+    //    notify()    — wakes one arbitrary waiting thread (scheduler picks which)
+    //    notifyAll() — wakes all waiting threads (safer default; use notify() only
+    //                  when all waiters are equivalent)
+    //    Always wrap wait() in a while loop — guards against spurious wakeups.
+    // ─────────────────────────────────────────────────────────────────────────
+    static class SharedBuffer {
+        private final Queue<Integer> buffer = new LinkedList<>();
+        private final int capacity;
+
+        SharedBuffer(int capacity) { this.capacity = capacity; }
+
+        synchronized void produce(int item) throws InterruptedException {
+            while (buffer.size() == capacity) wait(); // release lock; suspend
+            buffer.add(item);
+            System.out.println("Produced: " + item);
+            notifyAll(); // wake any waiting consumers
+        }
+
+        synchronized int consume() throws InterruptedException {
+            while (buffer.isEmpty()) wait();
+            int item = buffer.poll();
+            System.out.println("Consumed: " + item);
+            notifyAll(); // wake any waiting producers
+            return item;
+        }
+    }
+
+    static void waitNotifyDemo() throws InterruptedException {
+        SharedBuffer buf = new SharedBuffer(2);
+        Thread producer = new Thread(() -> {
+            try { for (int i = 0; i < 5; i++) buf.produce(i); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        });
+        Thread consumer = new Thread(() -> {
+            try { for (int i = 0; i < 5; i++) buf.consume(); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        });
+        producer.start(); consumer.start();
+        producer.join();  consumer.join();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 4. ReentrantLock + Condition — explicit lock; more flexible than synchronized
+    //    lock() / unlock()   — always release in finally
+    //    tryLock()           — non-blocking; returns false immediately if unavailable
+    //    tryLock(t, unit)    — timed attempt
+    //    lockInterruptibly() — can be interrupted while waiting for the lock
+    //    Condition           — like wait/notify but scoped; one lock can have many
+    //    new ReentrantLock(true) — fair mode: FIFO ordering prevents starvation (slower)
+    // ─────────────────────────────────────────────────────────────────────────
+    static class BoundedBuffer {
+        private final Queue<Integer> buffer = new LinkedList<>();
+        private final int capacity;
+        private final ReentrantLock lock = new ReentrantLock();
+        private final Condition notFull  = lock.newCondition();
+        private final Condition notEmpty = lock.newCondition();
+
+        BoundedBuffer(int capacity) { this.capacity = capacity; }
+
+        void put(int item) throws InterruptedException {
+            lock.lock();
+            try {
+                while (buffer.size() == capacity) notFull.await();
+                buffer.add(item);
+                notEmpty.signal(); // wake exactly one consumer (safe: only consumers wait here)
+            } finally { lock.unlock(); }
+        }
+
+        int take() throws InterruptedException {
+            lock.lock();
+            try {
+                while (buffer.isEmpty()) notEmpty.await();
+                int item = buffer.poll();
+                notFull.signal(); // wake exactly one producer
+                return item;
+            } finally { lock.unlock(); }
+        }
+    }
+
+    static void reentrantLockDemo() throws InterruptedException {
+        ReentrantLock lock = new ReentrantLock();
+
+        // tryLock — grab immediately or skip
+        if (lock.tryLock()) {
+            try { System.out.println("Got lock immediately"); }
+            finally { lock.unlock(); }
+        }
+
+        BoundedBuffer buf = new BoundedBuffer(2);
+        Thread p = new Thread(() -> {
+            try { for (int i = 0; i < 5; i++) buf.put(i); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        });
+        Thread c = new Thread(() -> {
+            try { for (int i = 0; i < 5; i++) System.out.println("Took: " + buf.take()); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        });
+        p.start(); c.start();
+        p.join(); c.join();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5. ReentrantReadWriteLock + volatile
+    //    ReadWriteLock: many concurrent readers OR one exclusive writer (never both)
+    //    Use when: reads >> writes (e.g. shared cache, config map)
+    //    Downgrade: acquire writeLock, then readLock, then release writeLock (safe)
+    //    Upgrade: NOT supported — trying to upgrade readLock→writeLock deadlocks
+    //
+    //    volatile: guarantees visibility (write immediately flushed to main memory,
+    //              read always from main memory). Does NOT guarantee atomicity —
+    //              i++ is still a race. Use for stop-flags, not counters.
+    // ─────────────────────────────────────────────────────────────────────────
+    static class Cache {
+        private final Map<String, String> data = new HashMap<>();
+        private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
+        private final Lock readLock  = rwLock.readLock();
+        private final Lock writeLock = rwLock.writeLock();
+
+        String get(String key) {
+            readLock.lock();
+            try { return data.get(key); }
+            finally { readLock.unlock(); }
+        }
+
+        void put(String key, String value) {
+            writeLock.lock();
+            try { data.put(key, value); }
+            finally { writeLock.unlock(); }
+        }
+    }
+
+    static volatile boolean running = true; // visible across threads immediately
+
+    static void rwLockAndVolatileDemo() throws InterruptedException {
+        Cache cache = new Cache();
+        cache.put("env", "prod");
+        System.out.println("Cache get: " + cache.get("env")); // prod
+
+        Thread worker = new Thread(() -> {
+            while (running) { /* busy loop — sees updated flag because volatile */ }
+            System.out.println("Worker stopped");
+        });
+        worker.start();
+        Thread.sleep(50);
+        running = false; // without volatile, worker might cache stale 'true' forever
+        worker.join();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 6. Producer-Consumer — BlockingQueue as the shared buffer
     //    Use when: decoupling producers from consumers; bounded capacity
     //    LinkedBlockingQueue  — linked nodes, separate head/tail locks
     //    ArrayBlockingQueue   — array-backed, single lock, bounded capacity
@@ -43,7 +270,7 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 2. Thread Pool — ExecutorService
+    // 7. Thread Pool — ExecutorService
     //    newFixedThreadPool(n)      — n threads, unbounded queue
     //    newCachedThreadPool()      — unlimited threads, 60s keepalive
     //    newSingleThreadExecutor()  — 1 thread, tasks run in order
@@ -93,18 +320,18 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 3. CompletableFuture — async non-blocking pipelines
-    //    supplyAsync   — async task with return value (uses ForkJoinPool)
-    //    runAsync      — async task, no return value
-    //    thenApply     — transform result (sync in same thread)
+    // 8. CompletableFuture — async non-blocking pipelines
+    //    supplyAsync    — async task with return value (uses ForkJoinPool)
+    //    runAsync       — async task, no return value
+    //    thenApply      — transform result (sync in same thread)
     //    thenApplyAsync — transform result (async in another thread)
-    //    thenCompose   — flatMap (returns another CompletableFuture)
-    //    thenCombine   — combine two independent futures
-    //    thenAccept    — consume result, returns CF<Void>
-    //    allOf         — wait for all to complete
-    //    anyOf         — complete when any completes
-    //    exceptionally — handle exception, provide fallback
-    //    handle        — runs on both success and failure
+    //    thenCompose    — flatMap (returns another CompletableFuture)
+    //    thenCombine    — combine two independent futures
+    //    thenAccept     — consume result, returns CF<Void>
+    //    allOf          — wait for all to complete
+    //    anyOf          — complete when any completes
+    //    exceptionally  — handle exception, provide fallback
+    //    handle         — runs on both success and failure
     // ─────────────────────────────────────────────────────────────────────────
     static void completableFutureDemo() throws Exception {
         // basic chain
@@ -163,7 +390,7 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 4. CountDownLatch — one-shot gate; N countdowns then open
+    // 9. CountDownLatch — one-shot gate; N countdowns then open
     //    Use when: main thread waits for N workers to finish init
     //    Cannot be reset (use CyclicBarrier if reuse needed)
     // ─────────────────────────────────────────────────────────────────────────
@@ -189,9 +416,9 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 5. CyclicBarrier — N threads meet at barrier, then all continue
-    //    Use when: multiple phases — all threads finish phase i before phase i+1
-    //    Reusable (cyclic). Optional Runnable fires when all threads arrive.
+    // 10. CyclicBarrier — N threads meet at barrier, then all continue
+    //     Use when: multiple phases — all threads finish phase i before phase i+1
+    //     Reusable (cyclic). Optional Runnable fires when all threads arrive.
     // ─────────────────────────────────────────────────────────────────────────
     static void cyclicBarrierDemo() throws Exception {
         int n = 3;
@@ -212,8 +439,8 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 6. Phaser — flexible multi-phase barrier with dynamic registration
-    //    Use when: dynamic number of tasks, tasks can join/leave mid-flight
+    // 11. Phaser — flexible multi-phase barrier with dynamic registration
+    //     Use when: dynamic number of tasks, tasks can join/leave mid-flight
     // ─────────────────────────────────────────────────────────────────────────
     static void phaserDemo() throws InterruptedException {
         Phaser phaser = new Phaser(1); // register main thread as party
@@ -236,10 +463,10 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 7. Fork/Join — divide-and-conquer parallelism
-    //    RecursiveTask<V>   — returns a value
-    //    RecursiveAction    — void, no return value
-    //    Work-stealing: idle threads steal tasks from busy threads' queues
+    // 12. Fork/Join — divide-and-conquer parallelism
+    //     RecursiveTask<V>   — returns a value
+    //     RecursiveAction    — void, no return value
+    //     Work-stealing: idle threads steal tasks from busy threads' queues
     // ─────────────────────────────────────────────────────────────────────────
     static class SumTask extends RecursiveTask<Long> {
         private final int[] arr;
@@ -272,8 +499,8 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 8. Exchanger — two threads swap data at a synchronization point
-    //    Use when: pipeline handoff; producer fills buffer, consumer drains it
+    // 13. Exchanger — two threads swap data at a synchronization point
+    //     Use when: pipeline handoff; producer fills buffer, consumer drains it
     // ─────────────────────────────────────────────────────────────────────────
     static void exchangerDemo() throws InterruptedException {
         Exchanger<String> exchanger = new Exchanger<>();
@@ -290,11 +517,11 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 9. StampedLock — optimistic reads; faster than ReadWriteLock when
-    //    reads rarely conflict with writes
-    //    tryOptimisticRead — no lock, but must validate stamp before use
-    //    readLock — shared, like ReadWriteLock
-    //    writeLock — exclusive
+    // 14. StampedLock — optimistic reads; faster than ReadWriteLock when
+    //     reads rarely conflict with writes
+    //     tryOptimisticRead — no lock, but must validate stamp before use
+    //     readLock — shared, like ReadWriteLock
+    //     writeLock — exclusive
     // ─────────────────────────────────────────────────────────────────────────
     static class Point {
         private double x, y;
@@ -317,7 +544,7 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 10. Thread-local state — each thread has its own isolated copy
+    // 15. Thread-local state — each thread has its own isolated copy
     //     Use when: user context, request IDs, date formatters (not thread-safe)
     // ─────────────────────────────────────────────────────────────────────────
     static final ThreadLocal<Integer> REQUEST_ID = ThreadLocal.withInitial(() -> 0);
@@ -335,7 +562,7 @@ public class Concurrency {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 11. Common Concurrency Gotchas
+    // 16. Common Concurrency Gotchas
     //
     //  Deadlock   — A holds lock1, wants lock2; B holds lock2, wants lock1
     //               Fix: always acquire locks in the SAME ORDER
@@ -357,7 +584,22 @@ public class Concurrency {
     // Demo
     // ─────────────────────────────────────────────────────────────────────────
     public static void main(String[] args) throws Exception {
-        System.out.println("=== Producer-Consumer ===");
+        System.out.println("=== Thread Creation ===");
+        threadCreationDemo();
+
+        System.out.println("\n=== synchronized ===");
+        synchronizedDemo();
+
+        System.out.println("\n=== wait / notify ===");
+        waitNotifyDemo();
+
+        System.out.println("\n=== ReentrantLock + Condition ===");
+        reentrantLockDemo();
+
+        System.out.println("\n=== ReadWriteLock + volatile ===");
+        rwLockAndVolatileDemo();
+
+        System.out.println("\n=== Producer-Consumer (BlockingQueue) ===");
         ProducerConsumerDemo pc = new ProducerConsumerDemo(2);
         Thread p = new Thread(pc.new Producer());
         Thread c = new Thread(pc.new Consumer());
