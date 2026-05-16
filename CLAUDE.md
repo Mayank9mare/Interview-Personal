@@ -51,6 +51,12 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   search-autocomplete/      SearchAutocomplete.java
   restaurant-waitlist/      RestaurantWaitlist.java
 
+/amazon/                    ← Amazon-specific LLD problems (Java) + DSA (C++)
+  AmazonDSA.cpp             — Arrays/Sliding Window, Heap/Intervals, Graphs, Stack/Design
+  unix-find/                FileSearch.java
+  pizza-pricing/            PizzaPricing.java
+  hit-counter/              HitCounter.java
+
 /rubrik/                    ← Rubrik-specific LLD/concurrency problems (Java)
   job-scheduler/            JobScheduler.java
   task-dependency/          TaskDependencyExecutor.java
@@ -167,6 +173,38 @@ questions.md                ← Problem list / interview question log
 - Transform: edge weight = `-ln(rate)`; profitable cycle (product > 1) = negative cycle (sum < 0).
 - Bellman-Ford with super-source init (`dist[all] = 0`) detects cycles anywhere in graph.
 - Cycle extraction: walk back V steps from `lastRelaxed` to land inside the cycle, then trace with visited-set.
+
+### Amazon — Interview Round Structure
+- Loop: 3–4 rounds of ~60 min each (virtual or onsite)
+- DSA round: 1–2 LeetCode Medium/Hard; key topics: heap/greedy, graphs (Union-Find), sliding window, intervals, stack
+- Machine coding (LLD) round: 60 min in an online IDE; expected working OOP code (not pseudocode)
+  - Extensibility is graded: Strategy/Decorator patterns score well
+  - Most repeated problems: Unix "find" (Strategy), Pizza Pricing (Decorator), Parking Lot, Hit Counter, Locker System
+  - Common follow-up: "add a new filter type", "make it thread-safe", "support multi-floor"
+- System design: 1 round, whiteboard-style HLD
+- Behavioural: Leadership Principles (Customer Obsession is highest weight; prepare ≥1 story per LP)
+- Bar Raiser: unannounced, any round; evaluates candidate against the bar for the entire company, not just the team
+
+### Amazon — Unix Find (FileSearch)
+- `HashMap<path, size>` for O(1) put/overwrite; linear scan for search (acceptable — find is naturally O(n)).
+- Strategy pattern: `SearchCriteria` is a `@FunctionalInterface`; `search(id, dir, arg)` dispatches to a registered strategy.
+- Directory prefix isolation: check `path.startsWith(dir + "/")` not `dir` to prevent `/data` matching `/dataset/...`.
+- Extensibility: `registerCriteria(id, lambda)` adds new types at runtime — no modification to FileSearch.
+- Complexity: O(1) put, O(n) search where n = total files.
+
+### Amazon — Pizza Pricing (Decorator)
+- Decorator pattern: `Pizza` interface → concrete base classes (Margherita, Farmhouse) → abstract `ToppingDecorator` wraps a `Pizza` → concrete toppings (ExtraCheese, Pepperoni, etc.).
+- `cost()` and `description()` are recursive: each decorator delegates to `wrapped.cost()` and appends its own.
+- Double-toppings are free: wrap `new ExtraCheese(new ExtraCheese(...))` — no special case needed.
+- Adding a new topping: one new class, zero changes to existing code (Open-Closed Principle).
+- Complexity: O(d) per cost/description call where d = decorator chain depth (number of toppings).
+
+### Amazon — Hit Counter (Thread-Safe)
+- Circular buffer of size `windowSeconds`: slot `t % windowSeconds` holds hits for second `t`.
+- Stale-slot invalidation: `times[slot] != timestamp` means the slot belongs to a prior cycle — reset before incrementing.
+- `ReentrantReadWriteLock`: concurrent reads (getHits) are non-blocking; only writes (hit) are exclusive.
+- Why not `TreeMap<timestamp, count>`? Circular buffer is O(1) per op vs O(log n), and memory is bounded to exactly `windowSeconds` slots.
+- Complexity: O(1) hit, O(windowSeconds) getHits (full buffer scan), O(windowSeconds) space.
 
 ## Git
 - Remote: `https://github.com/Mayank9mare/Interview-Personal.git`
