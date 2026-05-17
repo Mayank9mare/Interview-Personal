@@ -1,60 +1,105 @@
 import java.util.*;
 
+/**
+ * Driver class for {@link KVStore}. Contains the demo {@link #main} and
+ * houses {@code KVStore} as a static inner class for single-file compilation.
+ */
 public class KeyValueStore {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Key-Value Store with Nested Transactions
-    //
-    //   set(key, value)  — upsert
-    //   get(key)         — returns value, or null if absent
-    //   delete(key)      — remove key
-    //   begin()          — start a transaction (nestable)
-    //   commit()         — commit innermost transaction
-    //   rollback()       — undo all changes made in innermost transaction
-    //
-    // Strategy: Undo-log
-    //   All writes go directly to the main store — reads are always O(1).
-    //   Each active transaction maintains an undo log: key → pre-image value.
-    //   Only the first write to a key per transaction level is recorded
-    //   (subsequent writes to the same key within the same transaction don't
-    //   change what we need to restore).
-    //
-    //   commit()   → discard the undo log (changes stay in store). O(1).
-    //   rollback() → replay undo log in reverse, restoring each key. O(touched keys).
-    //
-    //   Nesting: a stack of undo logs supports arbitrarily deep transactions.
-    //   Rolling back the inner txn restores the state to just after begin() of
-    //   the outer txn; the outer txn's undo log is unaffected.
-    //
-    // Complexity:
-    //   get             O(1)
-    //   set / delete    O(1) + O(1) undo-log write (first touch per key per level)
-    //   commit          O(1)
-    //   rollback        O(k)   k = distinct keys touched in that transaction
-    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * In-memory key-value store with nestable, ACID-style transactions.
+     *
+     * <p>Supports six operations:
+     * <ul>
+     *   <li>{@link #set} — upsert a key/value pair</li>
+     *   <li>{@link #get} — point lookup (O(1), always reads committed + pending state)</li>
+     *   <li>{@link #delete} — remove a key</li>
+     *   <li>{@link #begin} — open a new (possibly nested) transaction</li>
+     *   <li>{@link #commit} — make the innermost transaction's changes permanent</li>
+     *   <li>{@link #rollback} — discard all changes made since the matching {@link #begin}</li>
+     * </ul>
+     *
+     * <p><b>Undo-log strategy:</b> all writes go directly to the main store so reads
+     * are always O(1). Each active transaction maintains an undo log mapping
+     * key → pre-image value. Only the <em>first</em> write to a key per transaction
+     * level is recorded; subsequent writes to the same key in the same transaction
+     * do not change what needs to be restored on rollback.
+     *
+     * <p><b>Nesting:</b> {@code txnStack} holds one undo-log frame per open
+     * transaction. Rolling back the innermost frame restores state to exactly after
+     * the matching {@code begin()}; outer frames are unaffected.
+     *
+     * <p>Core data structures:
+     * <ul>
+     *   <li>{@code store}: {@code HashMap<key, value>} — the live key-value state.</li>
+     *   <li>{@code txnStack}: stack of {@code LinkedHashMap<key, pre-image>} frames,
+     *       one per open transaction. {@code LinkedHashMap} preserves insertion order
+     *       for deterministic reverse-replay during rollback.</li>
+     * </ul>
+     *
+     * <p>Complexity:
+     * <ul>
+     *   <li>{@code get}            — O(1)</li>
+     *   <li>{@code set} / {@code delete} — O(1) amortised (O(1) undo-log write on first touch)</li>
+     *   <li>{@code commit}         — O(1)</li>
+     *   <li>{@code rollback}       — O(k), k = distinct keys touched in that transaction</li>
+     * </ul>
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class KVStore {
 
-        // Sentinel: stored in undo-log when a key did NOT exist before this txn.
-        // Rollback restores it by calling store.remove(key).
+        /**
+         * Sentinel stored in the undo log when a key did <em>not</em> exist before
+         * the current transaction touched it. On rollback, any entry whose pre-image
+         * is {@code ABSENT} is removed from the store rather than restored to a value.
+         */
         private static final Object ABSENT = new Object();
 
+        /** The live key-value state shared across all transaction levels. */
         private final Map<String, String> store = new HashMap<>();
 
-        // Each frame: key → value this key had BEFORE this transaction touched it.
-        // LinkedHashMap preserves insertion order for deterministic rollback replay.
+        /**
+         * Stack of undo-log frames, one per open transaction (innermost on top).
+         * Each frame maps key → the value that key held <em>before</em> this
+         * transaction first wrote it ({@link #ABSENT} if the key was missing).
+         */
         private final Deque<Map<String, Object>> txnStack = new ArrayDeque<>();
 
         // ── Core operations ──────────────────────────────────────────────────
 
+        /**
+         * Inserts or updates {@code key} with {@code value}.
+         * If a transaction is active, records the pre-image before the first write
+         * so the change can be undone by {@link #rollback}.
+         *
+         * @param key   the key to upsert (must not be null)
+         * @param value the value to associate with the key (must not be null)
+         */
         public void set(String key, String value) {
             saveUndo(key);
             store.put(key, value);
         }
 
+        /**
+         * Returns the current value associated with {@code key}, or {@code null}
+         * if the key does not exist. Always reflects the latest uncommitted state
+         * within an open transaction.
+         *
+         * @param key the key to look up
+         * @return the associated value, or {@code null} if absent
+         */
         public String get(String key) {
-            return store.get(key);  // null if absent
+            return store.get(key);
         }
 
+        /**
+         * Removes {@code key} from the store. Has no effect if the key does not exist.
+         * If a transaction is active, the removal is recorded in the undo log so
+         * {@link #rollback} can restore the key.
+         *
+         * @param key the key to remove
+         */
         public void delete(String key) {
             saveUndo(key);
             store.remove(key);
@@ -62,20 +107,42 @@ public class KeyValueStore {
 
         // ── Transaction control ───────────────────────────────────────────────
 
+        /**
+         * Opens a new transaction. Transactions may be nested; each {@code begin}
+         * must be paired with exactly one {@link #commit} or {@link #rollback}.
+         */
         public void begin() {
             txnStack.push(new LinkedHashMap<>());
         }
 
+        /**
+         * Commits the innermost open transaction, making all its changes permanent.
+         * The undo log for this transaction is discarded; the changes remain in the
+         * store and become part of the enclosing transaction (if any).
+         *
+         * @throws IllegalStateException if no transaction is currently open
+         */
         public void commit() {
             if (txnStack.isEmpty()) throw new IllegalStateException("No active transaction");
-            txnStack.pop();   // changes already in store — nothing else to do
+            txnStack.pop();
         }
 
+        /**
+         * Rolls back the innermost open transaction, restoring all keys to the
+         * values they held at the time of the matching {@link #begin}.
+         * Keys created during this transaction are removed; keys deleted during
+         * this transaction are restored. The enclosing transaction (if any) is
+         * unaffected.
+         *
+         * <p>Replay is performed in reverse insertion order so compound operations
+         * (e.g. set then delete on the same key) unwind correctly.
+         *
+         * @throws IllegalStateException if no transaction is currently open
+         */
         public void rollback() {
             if (txnStack.isEmpty()) throw new IllegalStateException("No active transaction");
             Map<String, Object> undo = txnStack.pop();
 
-            // Restore in reverse insertion order so compound operations unwind cleanly
             List<Map.Entry<String, Object>> entries = new ArrayList<>(undo.entrySet());
             for (int i = entries.size() - 1; i >= 0; i--) {
                 String key  = entries.get(i).getKey();
@@ -85,12 +152,24 @@ public class KeyValueStore {
             }
         }
 
+        /**
+         * Returns {@code true} if at least one transaction is currently open.
+         *
+         * @return {@code true} if inside a {@link #begin}/{@link #commit} or
+         *         {@link #begin}/{@link #rollback} block
+         */
         public boolean inTransaction() { return !txnStack.isEmpty(); }
 
         // ── Internal ─────────────────────────────────────────────────────────
 
-        // Record key's pre-image into the current transaction's undo log.
-        // Only the first write per key per txn level matters.
+        /**
+         * Records the pre-image of {@code key} into the current transaction's undo
+         * log. Only the first write per key per transaction level is recorded —
+         * subsequent writes to the same key within the same transaction do not
+         * change what needs to be restored.
+         *
+         * @param key the key about to be written or deleted
+         */
         private void saveUndo(String key) {
             if (txnStack.isEmpty()) return;
             Map<String, Object> frame = txnStack.peek();
@@ -99,6 +178,7 @@ public class KeyValueStore {
             }
         }
 
+        /** Returns the string representation of the live store (e.g. {@code {a=1, b=2}}). */
         @Override public String toString() { return store.toString(); }
     }
 
