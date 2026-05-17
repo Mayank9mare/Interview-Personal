@@ -3,10 +3,23 @@ package com.uber.movieticket;
 
 import java.util.*;
 
+/**
+ * Movie-ticket booking service supporting multiple cinemas, screens, shows, and seat selection.
+ *
+ * <p>Seat availability is stored as a {@code boolean[][][]} per cinema
+ * ({@code screens[screenIdx][row][col] == true} means the seat is free).
+ * Booking attempts first try to find consecutive seats in a single row;
+ * if that fails, it falls back to picking the required number of individual seats
+ * in scan order.
+ *
+ * <p>Not thread-safe.
+ */
 public class MovieTicketService {
+    /** Runtime state for a single cinema (multiple screens). */
     private static class Cinema {
         final int cityId;
-        final boolean[][][] screens; // screens[screenIdx][row][col] = free?
+        /** {@code screens[screenIdx][row][col] == true} when the seat is unoccupied. */
+        final boolean[][][] screens;
         Cinema(int cityId, int screenCount, int rows, int cols) {
             this.cityId = cityId;
             screens = new boolean[screenCount][rows][cols];
@@ -14,6 +27,7 @@ public class MovieTicketService {
         }
     }
 
+    /** A single scheduled showing of a movie on a specific screen. */
     private static class Show {
         final int movieId, cinemaId, screenIdx;
         final long startTime;
@@ -25,27 +39,60 @@ public class MovieTicketService {
         }
     }
 
+    /** A issued ticket referencing a show and the seats that were reserved. */
     private static class Ticket {
         final int showId;
-        final List<int[]> seats; // [row, col]
+        /** Reserved seats as [row, col] pairs. */
+        final List<int[]> seats;
         boolean cancelled = false;
         Ticket(int showId, List<int[]> seats) { this.showId = showId; this.seats = seats; }
     }
 
+    /** Cinema ID → Cinema. */
     private final Map<Integer, Cinema> cinemas = new HashMap<>();
+    /** Show ID → Show. */
     private final Map<Integer, Show> shows = new HashMap<>();
+    /** Ticket ID → Ticket. */
     private final Map<String, Ticket> tickets = new HashMap<>();
 
+    /**
+     * Registers a cinema.
+     *
+     * @param cinemaId     unique cinema identifier
+     * @param cityId       city the cinema belongs to
+     * @param screenCount  number of screens
+     * @param screenRow    rows per screen
+     * @param screenColumn columns (seats per row) per screen
+     */
     public void addCinema(int cinemaId, int cityId, int screenCount, int screenRow, int screenColumn) {
         cinemas.put(cinemaId, new Cinema(cityId, screenCount, screenRow, screenColumn));
     }
 
+    /**
+     * Schedules a movie show on a screen.
+     *
+     * @param showId      unique show identifier
+     * @param movieId     the movie being shown
+     * @param cinemaId    cinema hosting the show
+     * @param screenIndex 1-based screen number within the cinema
+     * @param startTime   epoch-millis start time
+     * @param endTime     epoch-millis end time (stored for reference; not used in conflict checks)
+     */
     public void addShow(int showId, int movieId, int cinemaId, int screenIndex, long startTime, long endTime) {
         Cinema c = cinemas.get(cinemaId);
         int sIdx = screenIndex - 1; // convert to 0-based
         shows.put(showId, new Show(movieId, cinemaId, sIdx, startTime, c.screens[sIdx].length, c.screens[sIdx][0].length));
     }
 
+    /**
+     * Books consecutive seats (preferred) or individual seats for a show.
+     *
+     * @param ticketId     unique ticket identifier
+     * @param showId       show to book for
+     * @param ticketsCount number of seats to reserve
+     * @return list of seat identifiers formatted as {@code "row-col"};
+     *         empty if not enough seats are available or the show does not exist
+     */
     public List<String> bookTicket(String ticketId, int showId, int ticketsCount) {
         Show show = shows.get(showId);
         if (show == null) return Collections.emptyList();
@@ -77,12 +124,19 @@ public class MovieTicketService {
         return formatSeats(seats);
     }
 
+    /** Converts seat coordinates to {@code "row-col"} strings. */
     private List<String> formatSeats(List<int[]> seats) {
         List<String> result = new ArrayList<>();
         for (int[] s : seats) result.add(s[0] + "-" + s[1]);
         return result;
     }
 
+    /**
+     * Cancels a ticket and releases its seats.
+     *
+     * @param ticketId the ticket to cancel
+     * @return {@code true} if the ticket existed and was not already cancelled
+     */
     public boolean cancelTicket(String ticketId) {
         Ticket t = tickets.get(ticketId);
         if (t == null || t.cancelled) return false;
@@ -93,6 +147,10 @@ public class MovieTicketService {
         return true;
     }
 
+    /**
+     * @param showId the show to check
+     * @return number of currently available seats, or 0 if the show does not exist
+     */
     public int getFreeSeatsCount(int showId) {
         Show show = shows.get(showId);
         if (show == null) return 0;
@@ -102,6 +160,13 @@ public class MovieTicketService {
         return count;
     }
 
+    /**
+     * Finds all cinemas in a city that have at least one show for the given movie.
+     *
+     * @param movieId the movie to search for
+     * @param cityId  the city to search in
+     * @return sorted list of cinema IDs
+     */
     public List<Integer> listCinemas(int movieId, int cityId) {
         Set<Integer> result = new TreeSet<>();
         for (Show show : shows.values()) {
@@ -111,6 +176,14 @@ public class MovieTicketService {
         return new ArrayList<>(result);
     }
 
+    /**
+     * Lists shows for a movie at a specific cinema, sorted by start time descending
+     * then show ID ascending.
+     *
+     * @param movieId  the movie to filter by
+     * @param cinemaId the cinema to filter by
+     * @return ordered list of show IDs
+     */
     public List<Integer> listShows(int movieId, int cinemaId) {
         List<Show> matching = new ArrayList<>();
         List<Integer> ids = new ArrayList<>();

@@ -2,69 +2,80 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
+/**
+ * Entry point demonstrating {@link PaymentTracker}.
+ * Compile: {@code javac DeliveryCost.java}  Run: {@code java DeliveryCost}
+ */
 public class DeliveryCost {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Delivery Driver Payment Tracker
-    //
-    // Food delivery companies employ tens of thousands of drivers who each
-    // submit hundreds of deliveries per week. Build a live-dashboard backend
-    // that tracks total payout cost.
-    //
-    //   addDriver(driverId, usdHourlyRate) — register a driver
-    //   recordDelivery(driverId, start, end) — log a completed delivery
-    //   getTotalCost()   — aggregate cost across ALL drivers  (live dashboard)
-    //   getDriverCost(id) — cost for a single driver
-    //   getDriverReport() — per-driver breakdown
-    //
-    // Key rules:
-    //   • Each delivery is paid independently: cost = rate × duration_hours
-    //   • Drivers CAN work multiple deliveries simultaneously — each is paid in full.
-    //   • No overlap de-duplication: two 1-hour concurrent deliveries → 2 h of pay.
-    //
-    // Why NOT double/float for money?
-    //   IEEE-754 cannot represent most decimal fractions exactly.
-    //   e.g. 0.1 + 0.2 == 0.30000000000000004 in double.
-    //   Accumulated rounding errors cause real accounting discrepancies at scale.
-    //   Fix: store rates as BigDecimal; accumulate in cents (long) and convert only
-    //   for display, OR keep everything in BigDecimal with explicit scale + HALF_UP.
-    //   Here we use BigDecimal throughout for correctness.
-    //
-    // Time format: "HH:MM" or "HH:MM:SS"  (seconds-level precision per spec)
-    // Complexity:
-    //   addDriver        O(1)
-    //   recordDelivery   O(1)  — just accumulate cost into a running total
-    //   getTotalCost     O(1)  — single read of the running total
-    //   getDriverCost    O(1)
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Live-dashboard backend that tracks delivery driver payout costs.
+     *
+     * <p>Each delivery is priced independently as {@code rate × durationSeconds / 3600}.
+     * Concurrent deliveries by the same driver are each paid in full — no overlap deduction.
+     *
+     * <p>All monetary arithmetic uses {@link BigDecimal} (HALF_UP, 2 dp for storage) to
+     * avoid the IEEE-754 rounding errors that accumulate when using {@code double} at scale.
+     *
+     * <p>Time strings are accepted in {@code "HH:MM"} or {@code "HH:MM:SS"} format.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class PaymentTracker {
         private static final int SECONDS_PER_HOUR = 3600;
 
+        /** Per-driver state: ID, hourly rate, accumulated cost, and delivery count. */
         private static class DriverRecord {
+            /** Driver's unique numeric ID. */
             final int id;
+
+            /** Hourly rate stored as {@link BigDecimal} to avoid floating-point drift. */
             final BigDecimal ratePerHour;
+
+            /** Running sum of costs (rounded to 2 dp) for all recorded deliveries. */
             BigDecimal totalCost = BigDecimal.ZERO;
+
+            /** Number of deliveries recorded for this driver. */
             int deliveryCount = 0;
 
+            /**
+             * @param id          driver ID
+             * @param ratePerHour exact hourly rate
+             */
             DriverRecord(int id, BigDecimal ratePerHour) {
                 this.id = id;
                 this.ratePerHour = ratePerHour;
             }
         }
 
+        /** All registered drivers keyed by their ID. */
         private final Map<Integer, DriverRecord> drivers = new HashMap<>();
+
+        /** Running sum of costs across all drivers; updated on every {@link #recordDelivery}. */
         private BigDecimal grandTotal = BigDecimal.ZERO;
 
-        // usdHourlyRate accepted as double from caller (API boundary) → immediately
-        // converted to BigDecimal so all internal arithmetic stays exact.
+        /**
+         * Registers a new driver. The {@code double} rate is converted to {@link BigDecimal}
+         * immediately so all subsequent arithmetic remains exact.
+         *
+         * @param driverId      unique driver identifier
+         * @param usdHourlyRate hourly pay rate in USD
+         * @throws IllegalArgumentException if a driver with this ID is already registered
+         */
         public void addDriver(int driverId, double usdHourlyRate) {
             if (drivers.containsKey(driverId))
                 throw new IllegalArgumentException("Driver already exists: " + driverId);
             drivers.put(driverId, new DriverRecord(driverId, BigDecimal.valueOf(usdHourlyRate)));
         }
 
-        // start / end: "HH:MM" or "HH:MM:SS"
+        /**
+         * Records a completed delivery and accumulates the cost for the driver.
+         *
+         * @param driverId unique driver identifier (must be registered)
+         * @param start    delivery start time in {@code "HH:MM"} or {@code "HH:MM:SS"} format
+         * @param end      delivery end time (must be strictly after {@code start})
+         * @throws IllegalArgumentException if the driver is unknown or end is not after start
+         */
         public void recordDelivery(int driverId, String start, String end) {
             DriverRecord dr = drivers.get(driverId);
             if (dr == null) throw new IllegalArgumentException("Unknown driver: " + driverId);
@@ -89,14 +100,27 @@ public class DeliveryCost {
 
         // ── Query ─────────────────────────────────────────────────────────────
 
+        /**
+         * Returns the aggregate payout cost across all drivers.
+         *
+         * @return grand total cost rounded to 2 decimal places
+         */
         public BigDecimal getTotalCost() { return grandTotal; }
 
+        /**
+         * Returns the total payout cost for a single driver.
+         *
+         * @param driverId the driver to query (must be registered)
+         * @return total cost for this driver, rounded to 2 decimal places
+         * @throws IllegalArgumentException if the driver is unknown
+         */
         public BigDecimal getDriverCost(int driverId) {
             DriverRecord dr = drivers.get(driverId);
             if (dr == null) throw new IllegalArgumentException("Unknown driver: " + driverId);
             return dr.totalCost;
         }
 
+        /** Prints a per-driver breakdown including rate, delivery count, cost, and grand total. */
         public void printReport() {
             System.out.println("=== Driver Payment Report ===");
             drivers.values().stream()
@@ -109,7 +133,13 @@ public class DeliveryCost {
 
         // ── Utility ───────────────────────────────────────────────────────────
 
-        // Parse "HH:MM" or "HH:MM:SS" → seconds since midnight
+        /**
+         * Parses a time string in {@code "HH:MM"} or {@code "HH:MM:SS"} format to seconds
+         * since midnight.
+         *
+         * @param t time string
+         * @return total seconds since midnight
+         */
         static long parseTime(String t) {
             String[] p = t.split(":");
             long h = Long.parseLong(p[0]);

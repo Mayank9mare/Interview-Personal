@@ -3,14 +3,40 @@ package com.uber.snakegame;
 
 import java.util.*;
 
+/**
+ * Simulates the classic Snake game on a fixed grid.
+ *
+ * <p>The snake starts at (0, 0) with length 1 and grows by one cell each time it eats a
+ * food item. Food items are consumed in the order they appear in the input list.
+ *
+ * <p>Data structures: {@code Deque<int[]>} for O(1) head/tail access; {@code HashSet<String>}
+ * for O(1) body-collision detection using "row,col" keys.
+ *
+ * <p>Not thread-safe.
+ */
 public class SnakeGame {
-    private final int width, height;
+    /** Grid width in columns. */
+    private final int width;
+    /** Grid height in rows. */
+    private final int height;
+    /** Pre-parsed food positions as [row, col] pairs, in order. */
     private final int[][] food;
-    private int foodIdx = 0, score = 0;
+    /** Index of the next food item to consume. */
+    private int foodIdx = 0;
+    /** Current score (one point per food item eaten). */
+    private int score = 0;
+    /** True once the snake hits a wall or its own body. */
     private boolean gameOver = false;
+    /** Snake body cells from head (front) to tail (back). */
     private final Deque<int[]> snake = new ArrayDeque<>();
+    /** "row,col" strings of all currently occupied cells for O(1) collision check. */
     private final Set<String> body = new HashSet<>();
 
+    /**
+     * @param width  number of columns in the grid
+     * @param height number of rows in the grid
+     * @param food   list of food positions as {@code "row,col"} strings, in consumption order
+     */
     public SnakeGame(int width, int height, List<String> food) {
         this.width = width;
         this.height = height;
@@ -24,6 +50,15 @@ public class SnakeGame {
         body.add("0,0");
     }
 
+    /**
+     * Moves the snake one step in the given direction.
+     *
+     * <p>The tail vacates its cell before the wall/body collision check, matching the
+     * original game rule that the tail moves simultaneously with the head.
+     *
+     * @param direction one of {@code "U"}, {@code "D"}, {@code "L"}, {@code "R"}
+     * @return current score after the move, or {@code -1} if the game is over
+     */
     public int move(String direction) {
         if (gameOver) return -1;
         int[] head = snake.peekFirst();

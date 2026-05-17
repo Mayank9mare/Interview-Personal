@@ -2,8 +2,20 @@ package com.uber.terminal;
 
 import java.util.Scanner;
 
+/**
+ * Interactive REPL driver for {@link FileSystem}.
+ * <p>
+ * Runs a built-in demo sequence first, then enters a read-eval-print loop that reads commands
+ * from standard input until the user types {@code exit}. Supported commands: {@code mkdir},
+ * {@code cd}, {@code ls}, {@code pwd}, {@code search}.
+ */
 public class Terminal {
 
+    /**
+     * Entry point: runs the demo, then starts the interactive REPL.
+     *
+     * @param args command-line arguments (ignored)
+     */
     public static void main(String[] args) {
         FileSystem fs = new FileSystem();
 
@@ -35,6 +47,13 @@ public class Terminal {
         scanner.close();
     }
 
+    /**
+     * Parses a single command line and delegates to the appropriate {@link FileSystem} method.
+     *
+     * @param fs   the file system to operate on
+     * @param line raw input line (command and optional argument separated by whitespace)
+     * @return output string to print, or an error/usage message; never {@code null}
+     */
     static String dispatch(FileSystem fs, String line) {
         String[] parts = line.split("\\s+", 2);
         String cmd = parts[0];
@@ -49,6 +68,7 @@ public class Terminal {
         }
     }
 
+    /** Prints a prompt, dispatches {@code cmd}, and prints the result (if non-empty). */
     private static void run(FileSystem fs, String cmd) {
         System.out.println(fs.pwd() + " $ " + cmd);
         String result = dispatch(fs, cmd);

@@ -2,33 +2,46 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
+/**
+ * Job scheduler that supports one-shot and periodic task execution using raw concurrency
+ * primitives — no {@code DelayQueue}, {@code BlockingQueue}, or {@code ScheduledExecutorService}.
+ *
+ * <p>Architecture:
+ * <ul>
+ *   <li>A single dispatcher thread sleeps until the next trigger time, then submits
+ *       the due task to a fixed worker-thread pool.</li>
+ *   <li>A {@code PriorityQueue} ordered by trigger time holds pending tasks; all access
+ *       is protected by a {@code ReentrantLock + Condition}.</li>
+ *   <li>When a new task with an earlier trigger is enqueued, it calls {@code signal()}
+ *       on the condition to wake the dispatcher immediately.</li>
+ *   <li>Periodic tasks re-enqueue themselves inside the worker callback after each run.</li>
+ * </ul>
+ *
+ * <p>Thread safety: all queue mutations are guarded by {@code lock}.
+ */
 public class JobScheduler {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Job Scheduler — implements ScheduledExecutorService semantics
-    //
-    // API:
-    //   schedule(task, delayMs)                  — run once after delayMs
-    //   scheduleAtFixedRate(task, initMs, perMs) — run periodically
-    //   shutdown()                               — drain and stop
-    //
-    // Design:
-    //   • PriorityQueue<ScheduledTask> ordered by trigger time
-    //     (raw PriorityQueue + ReentrantLock, NOT DelayQueue/BlockingQueue)
-    //   • Single dispatcher thread wakes at the next trigger time,
-    //     pulls the task, and submits it to a fixed worker pool.
-    //   • Periodic tasks re-enqueue themselves after each execution.
-    //   • A new earlier task signals the dispatcher to re-evaluate sleep time.
-    //
-    // Thread safety: all queue access under ReentrantLock + Condition.
-    // Complexity: enqueue O(log n), dispatch O(log n) per task.
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * A pending task entry in the scheduler queue.
+     *
+     * <p>Comparable by {@code triggerMs} so the {@link PriorityQueue} always surfaces
+     * the next-due task at its head.
+     */
     static class ScheduledTask implements Comparable<ScheduledTask> {
+        /** The work to run when the trigger fires. */
         final Runnable  action;
-        final long      periodMs;       // 0 = one-shot, >0 = periodic
-        volatile long   triggerMs;      // absolute epoch-ms when to fire
 
+        /** Repetition period; {@code 0} = one-shot, {@code > 0} = run every {@code periodMs} ms. */
+        final long      periodMs;
+
+        /** Absolute epoch-ms at which this task should next fire. */
+        volatile long   triggerMs;
+
+        /**
+         * @param action   the task to run
+         * @param delayMs  initial delay before first execution
+         * @param periodMs repetition period (0 for one-shot)
+         */
         ScheduledTask(Runnable action, long delayMs, long periodMs) {
             this.action    = action;
             this.periodMs  = periodMs;
@@ -41,13 +54,29 @@ public class JobScheduler {
         }
     }
 
+    /** Min-heap of pending tasks; head = earliest trigger time. */
     private final PriorityQueue<ScheduledTask> queue = new PriorityQueue<>();
+
+    /** Guards all access to {@code queue}. */
     private final ReentrantLock                lock  = new ReentrantLock();
+
+    /** Signalled when a new task is enqueued or when the scheduler shuts down. */
     private final Condition                    ready = lock.newCondition();
+
+    /** Thread pool that executes task actions. */
     private final ExecutorService              pool;
+
+    /** Set to {@code false} by {@link #shutdown()} to terminate the dispatcher. */
     private volatile boolean                   running = true;
+
+    /** Background thread that pulls due tasks and submits them to {@code pool}. */
     private final Thread                       dispatcher;
 
+    /**
+     * Creates a scheduler with the given worker pool size and starts the dispatcher.
+     *
+     * @param poolSize number of threads in the worker pool
+     */
     public JobScheduler(int poolSize) {
         pool = Executors.newFixedThreadPool(poolSize);
         dispatcher = new Thread(this::dispatchLoop, "sched-dispatcher");
@@ -57,15 +86,32 @@ public class JobScheduler {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
+    /**
+     * Schedules {@code task} to run once after {@code delayMs} milliseconds.
+     *
+     * @param task    the work to execute
+     * @param delayMs delay before execution (0 = run as soon as possible)
+     */
     public void schedule(Runnable task, long delayMs) {
         enqueue(new ScheduledTask(task, delayMs, 0));
     }
 
+    /**
+     * Schedules {@code task} to run repeatedly at a fixed rate.
+     *
+     * @param task            the work to execute
+     * @param initialDelayMs  delay before the first execution
+     * @param periodMs        interval between subsequent executions (must be &gt; 0)
+     * @throws IllegalArgumentException if {@code periodMs} is not positive
+     */
     public void scheduleAtFixedRate(Runnable task, long initialDelayMs, long periodMs) {
         if (periodMs <= 0) throw new IllegalArgumentException("period must be > 0");
         enqueue(new ScheduledTask(task, initialDelayMs, periodMs));
     }
 
+    /**
+     * Signals the dispatcher to stop and waits up to 2 seconds for the worker pool to drain.
+     */
     public void shutdown() {
         running = false;
         lock.lock();
@@ -77,6 +123,7 @@ public class JobScheduler {
 
     // ── Internals ─────────────────────────────────────────────────────────────
 
+    /** Adds {@code st} to the queue under the lock and signals the dispatcher. */
     private void enqueue(ScheduledTask st) {
         lock.lock();
         try {
@@ -87,6 +134,10 @@ public class JobScheduler {
         }
     }
 
+    /**
+     * Main loop of the dispatcher thread. Sleeps until the next trigger time, submits
+     * the due task to the pool, and re-evaluates. Terminates when {@link #running} is false.
+     */
     private void dispatchLoop() {
         while (running) {
             lock.lock();

@@ -1,39 +1,59 @@
 import java.util.*;
 
+/**
+ * Entry point demonstrating {@link MusicAnalyticsSystem}.
+ * Compile: {@code javac MusicAnalytics.java}  Run: {@code java MusicAnalytics}
+ */
 public class MusicAnalytics {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Music Analytics System
-    //
-    // add_song(songId)                 — register a song in the catalog
-    // play_song(userId, songId)        — record a play event
-    // print_analytics()                — songs ranked by unique user count (desc)
-    // print_recently_played(userId)    — all unique songs for user, most recent first
-    // print_recently_played(userId, k) — top-k most recently played unique songs
-    //
-    // Key data structures:
-    //   songUniqueUsers : songId → Set<userId>
-    //     Tracks which distinct users played each song.
-    //     size() of the set = unique-play count. O(1) per play.
-    //
-    //   recentlyPlayed : userId → LinkedHashSet<songId>
-    //     Maintains insertion order (tail = most recently played).
-    //     On replay: remove(songId) then add(songId) → moves song to tail in O(1).
-    //     "recently played" list is always deduplicated automatically.
-    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * In-memory music analytics system tracking song plays per user.
+     *
+     * <p>Core data structures:
+     * <ul>
+     *   <li>{@code songUniqueUsers}: songId → {@code Set<userId>} — tracks which distinct
+     *       users have played each song; {@code size()} gives the unique-play count.</li>
+     *   <li>{@code recentlyPlayed}: userId → {@code LinkedHashSet<songId>} — insertion-ordered
+     *       set where the tail is the most recently played song. Re-playing a song moves it
+     *       to the tail via remove-then-add in O(1).</li>
+     * </ul>
+     *
+     * <p>Core invariant: {@code recentlyPlayed} for any user contains no duplicates and
+     * reflects the most-recent-last ordering of distinct songs that user has played.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class MusicAnalyticsSystem {
 
+        /** Songs registered in the catalog. */
         private final Set<String> catalog = new HashSet<>();
+
+        /** Maps songId to the set of distinct userIds who have played it. */
         private final Map<String, Set<String>> songUniqueUsers = new HashMap<>();
-        // tail of LinkedHashSet = most recently played
+
+        /** Maps userId to their play history; tail of the set = most recently played. */
         private final Map<String, LinkedHashSet<String>> recentlyPlayed = new HashMap<>();
 
+        /**
+         * Registers a song in the catalog. No-op if the song is already registered.
+         *
+         * @param songId unique identifier for the song
+         */
         public void addSong(String songId) {
             if (catalog.add(songId)) {
                 songUniqueUsers.put(songId, new HashSet<>());
             }
         }
 
+        /**
+         * Records a play event. Moves {@code songId} to the tail of the user's history,
+         * bumping it to "most recently played". Increments the unique-user count if this
+         * is the user's first play of the song.
+         *
+         * @param userId the user who played the song
+         * @param songId the song played
+         * @throws IllegalArgumentException if the song is not in the catalog
+         */
         public void playSong(String userId, String songId) {
             if (!catalog.contains(songId))
                 throw new IllegalArgumentException("Unknown song: " + songId);
@@ -47,7 +67,9 @@ public class MusicAnalytics {
             history.add(songId);
         }
 
-        // Rank every song by its unique-user count, descending
+        /**
+         * Prints every song ranked by unique-user count, descending.
+         */
         public void printAnalytics() {
             System.out.println("=== Most Played Songs by Unique Users ===");
             songUniqueUsers.entrySet().stream()
@@ -56,11 +78,21 @@ public class MusicAnalytics {
                                                 e.getKey(), e.getValue().size()));
         }
 
+        /**
+         * Prints all unique songs the user has played, most recent first.
+         *
+         * @param userId the user whose history to display
+         */
         public void printRecentlyPlayed(String userId) {
             printRecentlyPlayed(userId, Integer.MAX_VALUE);
         }
 
-        // Most recent first; stops after k songs
+        /**
+         * Prints the top-{@code k} most recently played unique songs for the user.
+         *
+         * @param userId the user whose history to display
+         * @param k      maximum number of songs to print
+         */
         public void printRecentlyPlayed(String userId, int k) {
             String label = (k == Integer.MAX_VALUE) ? "all" : String.valueOf(k);
             System.out.printf("=== Recently Played for %-10s (top %s) ===%n", userId, label);

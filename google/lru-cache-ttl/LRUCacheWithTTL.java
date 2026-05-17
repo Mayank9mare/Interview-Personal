@@ -1,38 +1,43 @@
 import java.util.*;
 
+/**
+ * LRU Cache extended with per-entry time-to-live (TTL) expiry.
+ *
+ * <p>Extends the standard doubly-linked-list + HashMap LRU design: each node additionally
+ * stores an {@code expireAt} epoch-ms timestamp. Expired entries are evicted lazily on access
+ * rather than by a background thread.
+ *
+ * <p>Core data structures:
+ * <ul>
+ *   <li>Doubly-linked list with dummy head/tail sentinels — O(1) move-to-front and tail removal.</li>
+ *   <li>{@code HashMap<key, Node>} — O(1) lookup.</li>
+ * </ul>
+ *
+ * <p>Core invariants:
+ * <ul>
+ *   <li>Head-side of the list = most recently used; tail-side = least recently used.</li>
+ *   <li>On capacity overflow the LRU tail is evicted regardless of whether it is expired.</li>
+ *   <li>An expired entry found during {@link #get} is silently removed and {@code -1} returned.</li>
+ * </ul>
+ *
+ * <p>Thread safety: Not thread-safe.
+ */
 public class LRUCacheWithTTL {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // LRU Cache with Time-To-Live (TTL) — Google interview problem
-    //
-    // Extension of standard LRU: each entry carries an expiry timestamp.
-    // An expired entry is treated as absent on read and removed lazily.
-    //
-    // API:
-    //   put(key, value, ttlMs)  — insert/update; entry expires after ttlMs ms
-    //   get(key)                — return value or -1 if missing or expired
-    //   size()                  — count of live (non-expired) entries
-    //
-    // Design:
-    //   • Doubly-linked list (DLL) + HashMap — identical to standard LRU.
-    //   • Each Node additionally stores expireAt (epoch ms).
-    //   • get(): if node exists but expired → remove from DLL + map, return -1.
-    //   • put(): on capacity overflow, evict LRU tail even if not expired
-    //     (tail is always the least-recently-used live entry).
-    //   • Lazy expiry: no background thread. Expired entries only removed on access.
-    //     Call cleanup() explicitly to purge all stale entries if needed.
-    //
-    // Trade-off: lazy expiry can let stale entries occupy capacity until accessed.
-    // Alternative: background cleaner thread (add if asked as follow-up).
-    //
-    // Complexity: get/put O(1) amortized; cleanup O(n).
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /** A single cache entry in the doubly-linked list. */
     private static class Node {
         int  key, val;
-        long expireAt;   // System.currentTimeMillis() + ttlMs; Long.MAX_VALUE = no expiry
+
+        /** Epoch-ms at which this entry expires; {@link Long#MAX_VALUE} = no expiry. */
+        long expireAt;
+
         Node prev, next;
 
+        /**
+         * @param key   cache key
+         * @param val   cache value
+         * @param ttlMs time-to-live in milliseconds; use {@link Long#MAX_VALUE} for no expiry
+         */
         Node(int key, int val, long ttlMs) {
             this.key      = key;
             this.val      = val;
@@ -41,10 +46,24 @@ public class LRUCacheWithTTL {
         }
     }
 
+    /** Maximum number of live entries this cache can hold. */
     private final int           capacity;
-    private final Map<Integer, Node> map = new HashMap<>();
-    private final Node          head, tail;   // dummy sentinels
 
+    /** Key-to-node index for O(1) lookup. */
+    private final Map<Integer, Node> map = new HashMap<>();
+
+    /** Dummy head sentinel (MRU side). */
+    private final Node          head;
+
+    /** Dummy tail sentinel (LRU side). */
+    private final Node          tail;
+
+    /**
+     * Constructs an LRU cache with TTL support.
+     *
+     * @param capacity maximum number of live entries (must be &gt; 0)
+     * @throws IllegalArgumentException if capacity is not positive
+     */
     public LRUCacheWithTTL(int capacity) {
         if (capacity <= 0) throw new IllegalArgumentException("capacity must be > 0");
         this.capacity = capacity;
@@ -56,6 +75,13 @@ public class LRUCacheWithTTL {
 
     // ── Public API ────────────────────────────────────────────────────────────
 
+    /**
+     * Returns the value for {@code key}, or {@code -1} if absent or expired.
+     * Moves the entry to the MRU position on a successful (non-expired) hit.
+     *
+     * @param key the cache key
+     * @return the associated value, or {@code -1}
+     */
     public int get(int key) {
         Node n = map.get(key);
         if (n == null) return -1;
@@ -64,6 +90,14 @@ public class LRUCacheWithTTL {
         return n.val;
     }
 
+    /**
+     * Inserts or updates the entry. On a re-put the TTL is refreshed to {@code ttlMs} from now.
+     * If the cache is at capacity, the LRU tail entry is evicted before inserting.
+     *
+     * @param key   the cache key
+     * @param val   the value to store
+     * @param ttlMs time-to-live in milliseconds
+     */
     public void put(int key, int val, long ttlMs) {
         if (map.containsKey(key)) {
             Node n = map.get(key);
@@ -81,7 +115,11 @@ public class LRUCacheWithTTL {
         }
     }
 
-    // Purge all expired entries (call this to reclaim capacity proactively)
+    /**
+     * Scans the entire list and evicts all expired entries.
+     * Use this to proactively reclaim capacity; otherwise stale entries persist
+     * until they are accessed (lazy expiry).
+     */
     public void cleanup() {
         Node curr = head.next;
         while (curr != tail) {
@@ -91,10 +129,12 @@ public class LRUCacheWithTTL {
         }
     }
 
+    /** Returns the number of entries currently in the cache (including any unexpired stale ones). */
     public int size() { return map.size(); }
 
     // ── DLL helpers ───────────────────────────────────────────────────────────
 
+    /** Inserts {@code n} immediately after the head sentinel (MRU position). */
     private void addToFront(Node n) {
         n.next       = head.next;
         n.prev       = head;
@@ -102,15 +142,19 @@ public class LRUCacheWithTTL {
         head.next    = n;
     }
 
+    /** Unlinks {@code n} from the doubly-linked list. */
     private void remove(Node n) {
         n.prev.next = n.next;
         n.next.prev = n.prev;
     }
 
+    /** Moves {@code n} to the MRU position. */
     private void moveToFront(Node n) { remove(n); addToFront(n); }
 
+    /** Removes {@code n} from the list and the map. */
     private void evict(Node n) { remove(n); map.remove(n.key); }
 
+    /** Returns {@code true} if the entry's TTL has elapsed. */
     private boolean isExpired(Node n) {
         return System.currentTimeMillis() > n.expireAt;
     }

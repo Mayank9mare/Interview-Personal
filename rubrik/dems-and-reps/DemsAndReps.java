@@ -1,46 +1,52 @@
 import java.util.concurrent.locks.*;
 
+/**
+ * Shared-bathroom concurrency problem (Readers-Writers variant): Democrats and Republicans
+ * share one bathroom; members of the same party may use it simultaneously, but members of
+ * opposite parties cannot overlap.
+ *
+ * <p>Design:
+ * <ul>
+ *   <li>Single <em>fair</em> {@link ReentrantLock} guards all shared state — FIFO lock
+ *       acquisition prevents indefinite starvation.</li>
+ *   <li>Two {@link Condition}s ({@code demTurn}, {@code repTurn}) — exiting the bathroom
+ *       signals the opposite party if any are waiting, otherwise signals same-party threads.</li>
+ * </ul>
+ *
+ * <p>Core invariant: {@code democratsInside > 0 → republicansInside == 0} and vice versa.
+ *
+ * <p>Thread safety: Fully thread-safe; designed for concurrent multi-threaded use.
+ */
 public class DemsAndReps {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Democrats & Republicans — Shared Bathroom Problem
-    // (also known as: Unisex Bathroom / Readers-Writers variant)
-    //
-    // Rules:
-    //   1. Democrats and Republicans share one bathroom.
-    //   2. Any number of members of the SAME party may be inside simultaneously.
-    //   3. Members of OPPOSITE parties cannot be inside at the same time.
-    //   4. No starvation: when the bathroom empties, the party that has been
-    //      waiting longer gets priority. Fair ReentrantLock ensures FIFO ordering
-    //      for lock acquisition, preventing indefinite blocking.
-    //
-    // API:
-    //   democratEnter()    — blocks until safe to enter
-    //   democratExit()     — leaves; signals opposite party if bathroom empty
-    //   republicanEnter()  — blocks until safe to enter
-    //   republicanExit()   — leaves; signals opposite party if bathroom empty
-    //
-    // Design:
-    //   • Single ReentrantLock (fair) guards all shared state.
-    //   • Two Conditions: demTurn, repTurn.
-    //   • Waiting counts allow exit to signal the correct condition.
-    //   • On exit: if bathroom empties AND opposite party is waiting → signal them.
-    //     Otherwise signal own party (to unblock same-party threads still waiting).
-    //
-    // Invariant: democratsInside > 0 → republicansInside == 0, and vice versa.
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /** Democrats currently inside the bathroom. */
     private int democratsInside    = 0;
+
+    /** Republicans currently inside the bathroom. */
     private int republicansInside  = 0;
+
+    /** Democrats blocked waiting to enter. */
     private int democratsWaiting   = 0;
+
+    /** Republicans blocked waiting to enter. */
     private int republicansWaiting = 0;
 
-    private final ReentrantLock lock   = new ReentrantLock(true); // fair
+    /** Fair lock: FIFO ordering prevents starvation between parties. */
+    private final ReentrantLock lock   = new ReentrantLock(true);
+
+    /** Condition signalled when the bathroom becomes available for Democrats. */
     private final Condition     demTurn = lock.newCondition();
+
+    /** Condition signalled when the bathroom becomes available for Republicans. */
     private final Condition     repTurn = lock.newCondition();
 
     // ── Democrat ──────────────────────────────────────────────────────────────
 
+    /**
+     * Blocks until no Republicans are inside, then enters the bathroom.
+     *
+     * @throws InterruptedException if the thread is interrupted while waiting
+     */
     public void democratEnter() throws InterruptedException {
         lock.lock();
         try {
@@ -55,6 +61,10 @@ public class DemsAndReps {
         }
     }
 
+    /**
+     * Records a Democrat leaving. If the bathroom empties, signals Republicans if any are
+     * waiting; otherwise signals remaining Democrats.
+     */
     public void democratExit() {
         lock.lock();
         try {
@@ -72,6 +82,11 @@ public class DemsAndReps {
 
     // ── Republican ────────────────────────────────────────────────────────────
 
+    /**
+     * Blocks until no Democrats are inside, then enters the bathroom.
+     *
+     * @throws InterruptedException if the thread is interrupted while waiting
+     */
     public void republicanEnter() throws InterruptedException {
         lock.lock();
         try {
@@ -86,6 +101,10 @@ public class DemsAndReps {
         }
     }
 
+    /**
+     * Records a Republican leaving. If the bathroom empties, signals Democrats if any are
+     * waiting; otherwise signals remaining Republicans.
+     */
     public void republicanExit() {
         lock.lock();
         try {
@@ -102,6 +121,7 @@ public class DemsAndReps {
 
     // ── Logging ───────────────────────────────────────────────────────────────
 
+    /** Prints the current enter/exit event and live inside/waiting counts. */
     private void log(String action, String party) {
         System.out.printf("%-10s (%s) %s | inside: D=%-2d R=%-2d | waiting: D=%-2d R=%-2d%n",
             Thread.currentThread().getName(), party, action,
@@ -134,14 +154,17 @@ public class DemsAndReps {
         System.out.println("Invariant held if no line shows both D>0 and R>0 simultaneously.");
     }
 
+    /** Creates a Democrat thread that sleeps {@code startMs}, uses the bathroom for {@code useMs}. */
     private static Thread dem(DemsAndReps b, String name, long startMs, long useMs) {
         return party(b, name, startMs, useMs, true);
     }
 
+    /** Creates a Republican thread that sleeps {@code startMs}, uses the bathroom for {@code useMs}. */
     private static Thread rep(DemsAndReps b, String name, long startMs, long useMs) {
         return party(b, name, startMs, useMs, false);
     }
 
+    /** Shared factory: creates a daemon thread that calls enter/exit on the bathroom object. */
     private static Thread party(DemsAndReps b, String name, long startMs, long useMs, boolean dem) {
         Thread t = new Thread(() -> {
             try {

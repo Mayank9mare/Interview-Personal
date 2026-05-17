@@ -1,54 +1,67 @@
 import java.util.*;
 
+/**
+ * Entry point demonstrating {@link AccessManager}.
+ * Compile: {@code javac EmployeeAccess.java}  Run: {@code java EmployeeAccess}
+ */
 public class EmployeeAccess {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Employee Access Management System
-    //
-    //   grant(employeeId, resource)          — give employee direct access
-    //   revoke(employeeId, resource)         — remove direct access
-    //   get(employeeId)                      — all resources this employee can access
-    //   hasAccess(employeeId, resource)      — boolean check; supports wildcard ("data/*")
-    //
-    // Extended with Role-Based Access Control (RBAC):
-    //   createRole(roleId)
-    //   grantToRole(roleId, resource)        — add resource to a role
-    //   revokeFromRole(roleId, resource)
-    //   assignRole(employeeId, roleId)       — add employee to a role
-    //   unassignRole(employeeId, roleId)
-    //   extendRole(childRole, parentRole)    — child inherits all parent resources
-    //
-    // Design:
-    //   directGrants   : employeeId → Set<resource>
-    //   employeeRoles  : employeeId → Set<roleId>
-    //   roleResources  : roleId     → Set<resource>
-    //   roleParents    : roleId     → Set<parentRoleId>   (DAG — cycles guarded via visited set)
-    //
-    //   get(employeeId) = directGrants(employee)
-    //                   ∪ BFS/DFS over role hierarchy collecting roleResources at each node
-    //
-    //   Why BFS over the role graph?
-    //     Roles can form a hierarchy (superadmin → admin → viewer).
-    //     BFS with a visited-set handles diamonds and cycles correctly.
-    //
-    // Complexity:
-    //   grant / revoke   O(1)
-    //   get              O(E + R·P)  E=direct grants, R=reachable roles, P=perms per role
-    //   hasAccess        O(get) — linear scan of effective permissions for wildcard check
-    // ═══════════════════════════════════════════════════════════════════════════
+    /**
+     * Role-Based Access Control (RBAC) system with role inheritance.
+     *
+     * <p>Core data structures:
+     * <ul>
+     *   <li>{@code directGrants}: employeeId → {@code Set<resource>} — resources granted
+     *       directly to an employee, independent of any role.</li>
+     *   <li>{@code employeeRoles}: employeeId → {@code Set<roleId>} — roles assigned to
+     *       an employee.</li>
+     *   <li>{@code roleResources}: roleId → {@code Set<resource>} — resources attached to
+     *       a role.</li>
+     *   <li>{@code roleParents}: roleId → {@code Set<parentRoleId>} — directed acyclic graph
+     *       of role inheritance; a child role inherits all ancestor resources.</li>
+     * </ul>
+     *
+     * <p>Effective permissions for an employee = directGrants ∪ BFS over the role DAG
+     * collecting {@code roleResources} at every reachable node. The visited-set guards
+     * against diamond dependencies and cycles.
+     *
+     * <p>Wildcard resources: a granted {@code "prefix/*"} covers any resource whose path
+     * starts with {@code "prefix/"}.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class AccessManager {
 
+        /** Direct resource grants per employee, independent of roles. */
         private final Map<String, Set<String>> directGrants   = new HashMap<>();
+
+        /** Role memberships per employee. */
         private final Map<String, Set<String>> employeeRoles  = new HashMap<>();
+
+        /** Resources attached to each role. */
         private final Map<String, Set<String>> roleResources  = new HashMap<>();
-        private final Map<String, Set<String>> roleParents    = new HashMap<>(); // child → parents
+
+        /** Role inheritance DAG: child → set of direct parent role IDs. */
+        private final Map<String, Set<String>> roleParents    = new HashMap<>();
 
         // ── Employee-level grant / revoke ─────────────────────────────────────
 
+        /**
+         * Grants {@code resource} directly to {@code employeeId}.
+         *
+         * @param employeeId the employee receiving access
+         * @param resource   the resource string (may include wildcard, e.g. {@code "data/*"})
+         */
         public void grant(String employeeId, String resource) {
             directGrants.computeIfAbsent(employeeId, k -> new HashSet<>()).add(resource);
         }
 
+        /**
+         * Removes a direct resource grant from {@code employeeId}. No-op if not granted.
+         *
+         * @param employeeId the employee
+         * @param resource   the resource to revoke
+         */
         public void revoke(String employeeId, String resource) {
             Set<String> g = directGrants.get(employeeId);
             if (g != null) g.remove(resource);
@@ -56,7 +69,13 @@ public class EmployeeAccess {
 
         // ── Effective permission lookup ───────────────────────────────────────
 
-        // Returns every resource this employee can access (direct + all inherited roles)
+        /**
+         * Returns every resource this employee can access, combining direct grants with
+         * resources inherited from all reachable roles via BFS.
+         *
+         * @param employeeId the employee to look up
+         * @return mutable set of all effective resource strings; empty if none
+         */
         public Set<String> get(String employeeId) {
             Set<String> result = new HashSet<>(
                 directGrants.getOrDefault(employeeId, Collections.emptySet()));
@@ -76,9 +95,14 @@ public class EmployeeAccess {
             return result;
         }
 
-        // Check access to a specific resource.
-        // A granted "prefix/*" covers any resource starting with "prefix/".
-        // Example: grant("data/*") → hasAccess("data/users") == true
+        /**
+         * Returns {@code true} if the employee has access to {@code resource}.
+         * A granted {@code "prefix/*"} wildcard covers any resource starting with {@code "prefix/"}.
+         *
+         * @param employeeId the employee to check
+         * @param resource   the specific resource to test (e.g. {@code "data/users"})
+         * @return true if the employee has a direct or role-inherited grant covering this resource
+         */
         public boolean hasAccess(String employeeId, String resource) {
             for (String granted : get(employeeId)) {
                 if (granted.equals(resource)) return true;
@@ -92,29 +116,64 @@ public class EmployeeAccess {
 
         // ── Role management ───────────────────────────────────────────────────
 
+        /**
+         * Creates an empty role. No-op if the role already exists.
+         *
+         * @param roleId unique identifier for the role
+         */
         public void createRole(String roleId) {
             roleResources.putIfAbsent(roleId, new HashSet<>());
         }
 
+        /**
+         * Adds {@code resource} to the given role's permission set.
+         *
+         * @param roleId   the role to modify
+         * @param resource the resource to grant
+         */
         public void grantToRole(String roleId, String resource) {
             roleResources.computeIfAbsent(roleId, k -> new HashSet<>()).add(resource);
         }
 
+        /**
+         * Removes {@code resource} from the given role's permission set. No-op if absent.
+         *
+         * @param roleId   the role to modify
+         * @param resource the resource to revoke
+         */
         public void revokeFromRole(String roleId, String resource) {
             Set<String> r = roleResources.get(roleId);
             if (r != null) r.remove(resource);
         }
 
+        /**
+         * Assigns {@code roleId} to the employee, granting all role resources on next {@link #get}.
+         *
+         * @param employeeId the employee to update
+         * @param roleId     the role to assign
+         */
         public void assignRole(String employeeId, String roleId) {
             employeeRoles.computeIfAbsent(employeeId, k -> new HashSet<>()).add(roleId);
         }
 
+        /**
+         * Removes {@code roleId} from the employee's role membership. No-op if not assigned.
+         *
+         * @param employeeId the employee to update
+         * @param roleId     the role to remove
+         */
         public void unassignRole(String employeeId, String roleId) {
             Set<String> r = employeeRoles.get(employeeId);
             if (r != null) r.remove(roleId);
         }
 
-        // childRole inherits every resource that parentRole has (and all of parentRole's ancestors)
+        /**
+         * Makes {@code childRoleId} inherit all resources of {@code parentRoleId} and its
+         * ancestors. The inheritance edge is added to the role DAG.
+         *
+         * @param childRoleId  the role that will inherit
+         * @param parentRoleId the role whose resources are inherited
+         */
         public void extendRole(String childRoleId, String parentRoleId) {
             roleParents.computeIfAbsent(childRoleId, k -> new HashSet<>()).add(parentRoleId);
         }

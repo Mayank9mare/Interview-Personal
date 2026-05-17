@@ -1,63 +1,86 @@
 import java.util.*;
 
+/**
+ * Entry point demonstrating {@link OrgChart}.
+ * Compile: {@code javac OrgTree.java}  Run: {@code java OrgTree}
+ */
 public class OrgTree {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Org-Tree Height Cap
-    //
-    // Goal: ensure tree height ≤ h while minimizing new CEO direct reportees.
-    //
-    // Rule: any employee at depth > h reports directly to the CEO.
-    //       Subordinates of a moved employee stay in the same relative structure.
-    //
-    // Why greedily move the SHALLOWEST violator (depth h+1)?
-    //   Moving a node at depth h+1 to CEO (depth 1) pulls its entire subtree
-    //   up by h levels. Every descendant at depth h+1+k is now at depth 1+k.
-    //   Only descendants where 1+k > h (i.e. k > h-1) will still violate —
-    //   far fewer than if we moved deeper nodes individually.
-    //   Moving a deeper node instead leaves shallower violators untouched.
-    //
-    // Algorithm (single DFS, O(n) time):
-    //   flattenDFS(node, depth):
-    //     if depth > h:
-    //       reparent node → CEO, set depth = 1
-    //     for each child:
-    //       flattenDFS(child, depth + 1)      ← uses the (possibly updated) depth
-    //
-    // Complexity:
-    //   Time  O(n)  — every node visited exactly once
-    //   Space O(n)  — tree storage + O(h) recursion stack in the balanced case,
-    //                 O(n) worst case (linear chain)
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * A single employee node in the org-tree.
+     *
+     * <p>Maintains a bidirectional link to its manager and an ordered list of direct reports.
+     */
     static class Employee {
+        /** Unique employee identifier. */
         final String id;
+
+        /** Direct manager; {@code null} only for the CEO root. */
         Employee manager;
+
+        /** Ordered list of direct reports. */
         final List<Employee> reports = new ArrayList<>();
 
+        /** @param id unique identifier */
         Employee(String id) { this.id = id; }
 
+        /** Links {@code e} as a direct report and sets its manager pointer. */
         void addReport(Employee e) {
             reports.add(e);
             e.manager = this;
         }
 
+        /** Removes {@code e} from the direct-report list. */
         void removeReport(Employee e) { reports.remove(e); }
 
         @Override public String toString() { return id; }
     }
 
+    /**
+     * Org-tree with a height-cap operation that minimises new CEO direct reports.
+     *
+     * <p>The core operation {@link #flattenToHeight(int)} ensures the tree height
+     * is at most {@code h} by reparenting any node at depth {@code > h} directly
+     * under the CEO. Moving the shallowest violator (depth {@code h+1}) is greedy:
+     * it drags the entire sub-tree upward, minimising how many descendants still
+     * violate the cap after the move.
+     *
+     * <p>Algorithm — single DFS, O(n):
+     * <pre>
+     *   flattenDFS(node, depth):
+     *     if depth > h: reparent node → CEO, depth = 1
+     *     for each child: flattenDFS(child, depth + 1)
+     * </pre>
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class OrgChart {
+        /** The root (CEO) of the hierarchy. */
         private final Employee ceo;
+
+        /** All employees by ID for O(1) lookup. */
         private final Map<String, Employee> roster = new HashMap<>();
-        // Tracks who was moved to CEO during the last flatten call
+
+        /** Employees moved to CEO during the most recent {@link #flattenToHeight} call. */
         private final Set<Employee> movedToCeo = new HashSet<>();
 
+        /**
+         * Creates an org-chart with the given CEO as the root.
+         *
+         * @param ceoId unique identifier for the CEO
+         */
         OrgChart(String ceoId) {
             ceo = new Employee(ceoId);
             roster.put(ceoId, ceo);
         }
 
+        /**
+         * Adds an employee under the given manager (or re-parents an existing one).
+         *
+         * @param id        the employee's unique ID
+         * @param managerId the manager's ID (must already exist in the roster)
+         * @throws IllegalArgumentException if {@code managerId} is not in the roster
+         */
         public void addEmployee(String id, String managerId) {
             Employee mgr = get(managerId);
             Employee emp = roster.computeIfAbsent(id, Employee::new);
@@ -67,6 +90,13 @@ public class OrgTree {
 
         // ── Core operation ────────────────────────────────────────────────────
 
+        /**
+         * Restructures the tree so that its height is at most {@code h}.
+         * Any employee deeper than {@code h} levels below the CEO is moved to
+         * report directly to the CEO. Their sub-trees move with them.
+         *
+         * @param h the maximum allowed tree height (CEO = depth 0; direct reports = depth 1)
+         */
         public void flattenToHeight(int h) {
             movedToCeo.clear();
             for (Employee child : new ArrayList<>(ceo.reports)) {
@@ -74,7 +104,7 @@ public class OrgTree {
             }
         }
 
-        // node is at `depth` edges below CEO (CEO = 0; direct reports = 1)
+        /** DFS worker — reparents {@code node} to CEO if {@code depth > h}, then recurses. */
         private void flattenDFS(Employee node, int depth, int h) {
             if (depth > h) {
                 // Reparent: detach from current manager, attach to CEO
@@ -91,8 +121,15 @@ public class OrgTree {
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
-        public int height() { return subtreeHeight(ceo) - 1; } // exclude CEO level
+        /**
+         * Returns the height of the tree (max depth of any employee below CEO).
+         * An org with only the CEO has height 0.
+         *
+         * @return tree height
+         */
+        public int height() { return subtreeHeight(ceo) - 1; }
 
+        /** Recursive height of the subtree rooted at {@code e}. */
         private int subtreeHeight(Employee e) {
             if (e.reports.isEmpty()) return 1;
             int max = 0;
@@ -100,8 +137,10 @@ public class OrgTree {
             return 1 + max;
         }
 
+        /** Returns the number of direct reports the CEO currently has. */
         public int ceoDegree() { return ceo.reports.size(); }
 
+        /** Looks up an employee by ID, throwing if not found. */
         private Employee get(String id) {
             Employee e = roster.get(id);
             if (e == null) throw new IllegalArgumentException("Unknown: " + id);
@@ -110,6 +149,7 @@ public class OrgTree {
 
         // ── Visualisation ─────────────────────────────────────────────────────
 
+        /** Prints the full tree with height, CEO degree, and move annotations. */
         public void printTree() {
             System.out.printf("Org tree  height=%d  CEO direct reports=%d%n",
                               height(), ceoDegree());
@@ -117,6 +157,7 @@ public class OrgTree {
             printChildren(ceo, "");
         }
 
+        /** Recursive ASCII-tree printer with move markers. */
         private void printChildren(Employee node, String prefix) {
             List<Employee> children = node.reports;
             for (int i = 0; i < children.size(); i++) {

@@ -1,37 +1,36 @@
 import java.util.*;
 
+/**
+ * Entry point demonstrating both logger variants asked at Google.
+ * Compile: {@code javac LoggerMessagePrinter.java}  Run: {@code java LoggerMessagePrinter}
+ */
 public class LoggerMessagePrinter {
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Logger — two variants asked at Google
-    //
-    // Variant A — Rate-Limited Logger (LeetCode 359)
-    //   shouldPrintMessage(timestamp, message)
-    //   Returns true only if the message hasn't been printed in the last 10s.
-    //   Use case: suppress duplicate log spam.
-    //
-    // Variant B — Request Tracker (Google onsite confirmed)
-    //   startReq(reqId, startTime)   — log when a request began
-    //   finishReq(reqId)             — mark a request as done
-    //   printFinished()              — print finished requests in start-time order
-    //
-    //   Key insight: requests finish out of order. We can only emit a contiguous
-    //   prefix of the start-time ordering where ALL requests are done.
-    //   A min-heap on startTime lets us drain greedily from the front.
-    //
-    //   Example: A(t=1), B(t=2), C(t=3), D(t=4) start.
-    //   D finishes, C finishes → can't print yet (A is still running).
-    //   A finishes → print A; B still running, stop.
-    //   B finishes → print B, C, D.
-    // ═══════════════════════════════════════════════════════════════════════════
 
     // ── Variant A: Rate-limited logger ────────────────────────────────────────
 
+    /**
+     * Rate-limiting logger that suppresses duplicate messages within a 10-second cooldown
+     * window (LeetCode 359).
+     *
+     * <p>Core data structure: {@code HashMap<message, lastTimestamp>} — records the last
+     * second at which each message was allowed to print.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class RateLimitLogger {
         private static final int COOLDOWN_SEC = 10;
+
+        /** Maps each message to the timestamp at which it was last printed. */
         private final Map<String, Integer> lastPrinted = new HashMap<>();
 
-        // Returns true and records timestamp if message was not printed in last 10s.
+        /**
+         * Returns {@code true} and records the timestamp if the message has not been printed
+         * in the last 10 seconds. Suppresses the message otherwise.
+         *
+         * @param timestamp current time in seconds (non-decreasing)
+         * @param message   the log message
+         * @return true if the message should be printed now
+         */
         public boolean shouldPrintMessage(int timestamp, String message) {
             Integer last = lastPrinted.get(message);
             if (last == null || timestamp - last >= COOLDOWN_SEC) {
@@ -44,34 +43,72 @@ public class LoggerMessagePrinter {
 
     // ── Variant B: Request tracker ────────────────────────────────────────────
 
+    /**
+     * Request tracker that prints finished requests in strict start-time order (Google onsite).
+     *
+     * <p>Key insight: requests complete out of order; we can only emit a contiguous prefix
+     * of the start-time ordering where every earlier request is also done.
+     *
+     * <p>Core data structures:
+     * <ul>
+     *   <li>Min-heap on {@code startTime} — always exposes the earliest-started request.</li>
+     *   <li>{@code HashMap<reqId, Req>} — O(1) {@link #finishReq} lookup.</li>
+     * </ul>
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class RequestLogger {
+        /** Mutable state for a single in-flight request. */
         private static class Req {
+            /** Unique request identifier. */
             final String id;
+
+            /** Wall-clock time when the request started. */
             final long   startTime;
+
+            /** Set to {@code true} by {@link RequestLogger#finishReq}. */
             volatile boolean finished = false;
 
+            /** @param id unique identifier; @param startTime epoch time the request started */
             Req(String id, long startTime) { this.id = id; this.startTime = startTime; }
         }
 
+        /** O(1) lookup of a request's mutable state by ID. */
         private final Map<String, Req>       active  = new HashMap<>();
-        // Min-heap ordered by startTime so we always print in start-time order
+
+        /** Min-heap on startTime so the earliest-started request is always at the front. */
         private final PriorityQueue<Req>     heap    =
             new PriorityQueue<>(Comparator.comparingLong(r -> r.startTime));
 
+        /**
+         * Logs the start of a new request.
+         *
+         * @param reqId     unique request identifier
+         * @param startTime time the request began (used for ordering)
+         */
         public void startReq(String reqId, long startTime) {
             Req r = new Req(reqId, startTime);
             active.put(reqId, r);
             heap.offer(r);
         }
 
+        /**
+         * Marks the request as finished.
+         *
+         * @param reqId the request that completed
+         * @throws IllegalArgumentException if the request was never started
+         */
         public void finishReq(String reqId) {
             Req r = active.get(reqId);
             if (r == null) throw new IllegalArgumentException("Unknown request: " + reqId);
             r.finished = true;
         }
 
-        // Drain the heap while the earliest-started request is also finished.
-        // This ensures we never emit a gap in start-time order.
+        /**
+         * Drains and prints all finished requests from the front of the heap in start-time
+         * order, stopping as soon as the earliest-started request is still running.
+         * This guarantees no gap in the emitted ordering.
+         */
         public void printFinished() {
             List<Req> printed = new ArrayList<>();
             while (!heap.isEmpty() && heap.peek().finished) {
@@ -90,6 +127,7 @@ public class LoggerMessagePrinter {
                     heap.peek().startTime);
         }
 
+        /** Returns the number of requests (finished or running) still in the heap. */
         public int pendingCount() { return heap.size(); }
     }
 

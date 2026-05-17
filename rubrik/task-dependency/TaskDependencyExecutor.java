@@ -1,38 +1,51 @@
 import java.util.*;
 import java.util.concurrent.*;
 
+/**
+ * Concurrent task executor that respects a dependency DAG — each task runs only after
+ * all of its declared dependencies have completed.
+ *
+ * <p>Algorithm:
+ * <ol>
+ *   <li>After all tasks are registered, build reverse edges (dependency → dependents).</li>
+ *   <li>Seed the thread pool with tasks whose {@code pendingDeps == 0}.</li>
+ *   <li>When a task finishes, atomically decrement {@code pendingDeps} for each dependent;
+ *       submit those that reach 0 to the pool.</li>
+ *   <li>A {@code CountDownLatch(total)} blocks {@link #execute()} until every task is done.</li>
+ * </ol>
+ *
+ * <p>Cycle detection runs via DFS before execution begins and throws
+ * {@link IllegalStateException} if a cycle is found.
+ *
+ * <p>Thread safety: {@code pendingDeps} decrements are {@code synchronized} on the node
+ * to prevent races when multiple dependencies finish concurrently.
+ */
 public class TaskDependencyExecutor {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Task Dependency Executor
-    //
-    // Problem: Given a set of tasks with dependencies (a DAG), execute them
-    // concurrently such that a task only runs after ALL its dependencies finish.
-    //
-    // API:
-    //   addTask(id, action, deps...)  — register a task and its dependencies
-    //   execute()                     — run all tasks; blocks until all done
-    //
-    // Design:
-    //   • Build forward edges (dep → dependents) after all tasks are registered.
-    //   • Each TaskNode tracks pendingDeps (volatile int).
-    //   • Tasks with pendingDeps == 0 are immediately runnable.
-    //   • On task completion: decrement pendingDeps of each dependent;
-    //     if it hits 0, submit that dependent to the thread pool.
-    //   • A shared CountDownLatch(total tasks) signals overall completion.
-    //   • Cycle detection via DFS before execution begins.
-    //
-    // Thread safety: pendingDeps update + pool.submit under synchronized(node).
-    // Complexity: O(V + E) time, O(V + E) space (V=tasks, E=dependency edges).
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * A single task node in the dependency graph.
+     */
     static class TaskNode {
+        /** Unique task identifier. */
         final String         id;
-        final Runnable       action;
-        final List<String>   depIds;
-        final List<TaskNode> dependents = new ArrayList<>(); // tasks that need THIS
-        volatile int         pendingDeps;                    // decremented as deps finish
 
+        /** The work to execute. */
+        final Runnable       action;
+
+        /** IDs of tasks that must complete before this one can start. */
+        final List<String>   depIds;
+
+        /** Tasks that are waiting for this task to finish (reverse edges). */
+        final List<TaskNode> dependents = new ArrayList<>();
+
+        /** Number of declared dependencies that have not yet finished; starts at {@code depIds.size()}. */
+        volatile int         pendingDeps;
+
+        /**
+         * @param id     unique task identifier
+         * @param action the work to perform
+         * @param depIds IDs of prerequisite tasks
+         */
         TaskNode(String id, Runnable action, List<String> depIds) {
             this.id          = id;
             this.action      = action;
@@ -41,14 +54,29 @@ public class TaskDependencyExecutor {
         }
     }
 
+    /** All registered tasks keyed by ID; insertion-ordered for deterministic seeding. */
     private final Map<String, TaskNode> tasks = new LinkedHashMap<>();
 
+    /**
+     * Registers a task with its declared dependencies.
+     *
+     * @param id     unique task identifier
+     * @param action the work to perform
+     * @param deps   zero or more IDs of tasks that must finish before this one
+     * @throws IllegalArgumentException if a task with this ID is already registered
+     */
     public void addTask(String id, Runnable action, String... deps) {
         if (tasks.containsKey(id)) throw new IllegalArgumentException("Duplicate task: " + id);
         tasks.put(id, new TaskNode(id, action, Arrays.asList(deps)));
     }
 
-    // Execute all tasks respecting dependencies; blocks until all complete.
+    /**
+     * Executes all registered tasks concurrently, respecting the declared dependency order.
+     * Blocks until every task has completed.
+     *
+     * @throws IllegalStateException if any declared dependency ID is unknown, or if the
+     *                               dependency graph contains a cycle
+     */
     public void execute() {
         // Wire up dependents (reverse of dep edges)
         for (TaskNode node : tasks.values()) {
@@ -78,6 +106,7 @@ public class TaskDependencyExecutor {
         }
     }
 
+    /** Executes a task and, on completion, checks whether any dependent is now unblocked. */
     private void run(TaskNode node, ExecutorService pool, CountDownLatch allDone) {
         System.out.printf("[%s] START  %s%n", Thread.currentThread().getName(), node.id);
         try {
@@ -100,6 +129,7 @@ public class TaskDependencyExecutor {
 
     // ── Cycle detection (DFS) ─────────────────────────────────────────────────
 
+    /** Returns {@code true} if the dependency graph contains a cycle. */
     private boolean hasCycle() {
         Set<String> visited = new HashSet<>(), onStack = new HashSet<>();
         for (String id : tasks.keySet())
@@ -107,6 +137,7 @@ public class TaskDependencyExecutor {
         return false;
     }
 
+    /** DFS cycle-detection helper; {@code onStack} tracks the current recursion path. */
     private boolean dfs(String id, Set<String> visited, Set<String> onStack) {
         if (onStack.contains(id))  return true;
         if (visited.contains(id))  return false;

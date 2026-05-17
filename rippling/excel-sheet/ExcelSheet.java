@@ -2,55 +2,54 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.regex.*;
 
+/**
+ * Entry point demonstrating {@link Sheet}.
+ * Compile: {@code javac ExcelSheet.java}  Run: {@code java ExcelSheet}
+ */
 public class ExcelSheet {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Excel Sheet
-    //
-    //   set(cell, value)   — cell is "A1", "B3", etc.
-    //                        value is a number ("42", "3.14") or a formula ("=A1+B2*3")
-    //   print()            — renders a grid showing raw and computed value per cell
-    //
-    // Formula support:
-    //   +  -  *  /  ( )  cell references  unary minus
-    //   e.g. "=A1+B1", "=(A1+B1)*C2", "=-3", "=A1*-1"
-    //
-    // Evaluation:
-    //   Recursive descent parser with operator precedence.
-    //   Cell references resolved lazily; results cached per print() call.
-    //   Circular dependency detected via a DFS "visiting" set → #CIRC error.
-    //   Unset cells evaluate to 0.
-    //
-    // Data structures:
-    //   raw  : LinkedHashMap<cell, raw-string>   — preserves insertion order for printing
-    //   deps : Map<cell, Set<cell>>              — direct references (for cycle detection)
-    //
-    // Complexity per print():
-    //   Each cell evaluated once (memoised cache).  O(n) total where n = cells set.
-    //   Parser runs in O(|expr|) per cell.
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    // ── Recursive-descent parser ──────────────────────────────────────────────
-    // Grammar:
-    //   expr   = term   (('+' | '-') term)*
-    //   term   = factor (('*' | '/') factor)*
-    //   factor = '(' expr ')' | '-' factor | NUMBER | CELL_REF
-    //
-    // CELL_REF resolution is delegated to a Function<String,Double> so the
-    // parser stays decoupled from the Sheet's cycle-detection machinery.
-    // ─────────────────────────────────────────────────────────────────────────
+    /**
+     * Recursive-descent expression parser supporting {@code + - * / ( )} and cell references.
+     *
+     * <p>Grammar:
+     * <pre>
+     *   expr   = term   (('+' | '-') term)*
+     *   term   = factor (('*' | '/') factor)*
+     *   factor = '(' expr ')' | '-' factor | NUMBER | CELL_REF
+     * </pre>
+     *
+     * <p>Cell reference resolution is delegated to a {@code Function<String,Double>}
+     * injected at construction time, keeping the parser decoupled from cycle-detection.
+     */
     static class Parser {
+        /** Expression string with whitespace stripped. */
         private final String s;
+
+        /** Current parse position. */
         private int pos;
+
+        /** Callback that resolves a cell reference to its numeric value. */
         private final Function<String, Double> resolver;
 
+        /**
+         * @param expr     formula string (without leading {@code =})
+         * @param resolver function that maps a cell reference (e.g. {@code "A1"}) to its value
+         */
         Parser(String expr, Function<String, Double> resolver) {
             this.s        = expr.replaceAll("\\s+", ""); // strip all whitespace
             this.resolver = resolver;
         }
 
+        /**
+         * Parses the full expression and returns its numeric value.
+         *
+         * @return evaluated result
+         * @throws ArithmeticException      on division by zero
+         * @throws IllegalArgumentException on syntax errors
+         */
         double parse() { double v = parseExpr(); return v; }
 
+        /** Handles addition and subtraction (lowest precedence). */
         private double parseExpr() {
             double val = parseTerm();
             while (pos < s.length() && (s.charAt(pos) == '+' || s.charAt(pos) == '-')) {
@@ -61,6 +60,7 @@ public class ExcelSheet {
             return val;
         }
 
+        /** Handles multiplication and division. */
         private double parseTerm() {
             double val = parseFactor();
             while (pos < s.length() && (s.charAt(pos) == '*' || s.charAt(pos) == '/')) {
@@ -72,6 +72,7 @@ public class ExcelSheet {
             return val;
         }
 
+        /** Handles parentheses, unary minus, number literals, and cell references. */
         private double parseFactor() {
             if (pos >= s.length()) throw new IllegalArgumentException("Unexpected end");
             char c = s.charAt(pos);
@@ -107,19 +108,47 @@ public class ExcelSheet {
         }
     }
 
-    // ── Sheet ─────────────────────────────────────────────────────────────────
+    /**
+     * In-memory spreadsheet that supports numeric literals and arithmetic formulas.
+     *
+     * <p>Core data structures:
+     * <ul>
+     *   <li>{@code raw}: {@code LinkedHashMap<cell, rawString>} — preserves insertion order
+     *       so {@link #print()} renders cells in the order they were set.</li>
+     * </ul>
+     *
+     * <p>Evaluation is lazy and memoised per {@link #print()} call. A DFS visiting-set
+     * detects circular dependencies and renders the offending cell as {@code #CIRC}.
+     * Unset cells evaluate to 0.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class Sheet {
+        /** Maps cell reference (e.g. {@code "A1"}) to its raw string value or formula. */
         private final Map<String, String> raw  = new LinkedHashMap<>();
 
+        /**
+         * Sets or overwrites the cell's content.
+         *
+         * @param cell  cell reference such as {@code "A1"} or {@code "AA12"} (case-insensitive)
+         * @param value a numeric literal ({@code "42"}) or a formula starting with {@code "="}
+         */
         public void set(String cell, String value) {
             raw.put(cell.toUpperCase().trim(), value.trim());
         }
 
-        // Evaluate one cell (public entry point)
+        /**
+         * Evaluates a cell and returns its numeric value.
+         *
+         * @param cell cell reference (case-insensitive)
+         * @return the evaluated value; 0.0 if the cell is unset
+         * @throws IllegalStateException if a circular dependency is detected
+         */
         public double evaluate(String cell) {
             return eval(cell.toUpperCase(), new HashSet<>(), new HashMap<>());
         }
 
+        /** Memoised recursive evaluator; {@code visiting} guards against circular refs. */
         private double eval(String cell, Set<String> visiting, Map<String, Double> cache) {
             if (cache.containsKey(cell)) return cache.get(cell);
             if (visiting.contains(cell))
@@ -143,6 +172,10 @@ public class ExcelSheet {
 
         // ── Print ─────────────────────────────────────────────────────────────
 
+        /**
+         * Renders all set cells in a grid showing raw value and computed result side-by-side.
+         * Cells with circular dependencies display {@code #CIRC}; division-by-zero shows {@code #div/0}.
+         */
         public void print() {
             if (raw.isEmpty()) { System.out.println("(empty)"); return; }
 
@@ -207,7 +240,7 @@ public class ExcelSheet {
 
         // ── Utility ───────────────────────────────────────────────────────────
 
-        // "A1" → [row=1, col=0],  "B3" → [row=3, col=1],  "AA2" → [row=2, col=26]
+        /** Converts {@code "A1"} → {@code [1, 0]}, {@code "AA2"} → {@code [2, 26]}. */
         private int[] cellToRowCol(String cell) {
             int i = 0;
             while (i < cell.length() && Character.isLetter(cell.charAt(i))) i++;
@@ -218,7 +251,7 @@ public class ExcelSheet {
             return new int[]{row, col - 1};
         }
 
-        // 0→"A", 1→"B", …, 25→"Z", 26→"AA", …
+        /** Converts 0-based column index to label: {@code 0→"A"}, {@code 25→"Z"}, {@code 26→"AA"}. */
         private String colLabel(int idx) {
             StringBuilder sb = new StringBuilder();
             for (int n = idx + 1; n > 0; n = (n - 1) / 26)
@@ -226,12 +259,14 @@ public class ExcelSheet {
             return sb.toString();
         }
 
+        /** Formats a double as an integer string when possible, otherwise 4 decimal places. */
         private String fmt(double v) {
             return (v == Math.floor(v) && !Double.isInfinite(v))
                    ? String.valueOf((long) v)
                    : String.format("%.4f", v);
         }
 
+        /** Centre-pads {@code s} to {@code width} characters. */
         private String centred(String s, int width) {
             int pad = Math.max(0, width - s.length());
             int l = pad / 2, r = pad - l;

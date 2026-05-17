@@ -1,40 +1,39 @@
 import java.util.*;
 
+/**
+ * Restaurant waitlist manager for a host desk — Google onsite LLD problem.
+ *
+ * <p>Core data structures:
+ * <ul>
+ *   <li>{@code queue}: {@code LinkedList<Party>} FIFO — O(1) enqueue/dequeue.</li>
+ *   <li>{@code byName}: {@code HashMap<name, Party>} — O(1) lookup for position queries
+ *       and duplicate detection.</li>
+ * </ul>
+ *
+ * <p>Seating policy ({@link #seatNextFitting}): first-fit from the front of the queue —
+ * parties behind an oversized group are skipped, matching realistic restaurant behaviour.
+ *
+ * <p>Thread safety: Not thread-safe.
+ */
 public class RestaurantWaitlist {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Restaurant Waitlist Manager — Google onsite LLD problem
-    //
-    // A host desk manages a queue of waiting parties and seats them as tables
-    // become available.
-    //
-    // API:
-    //   addParty(name, size)            — add party to end of waitlist
-    //   seatNextFitting(tableCapacity)  — seat first party whose size ≤ capacity
-    //                                     returns party name, or null if none fits
-    //   removeParty(name)               — party left (cancellation)
-    //   getWaitlist()                   — all parties in order (oldest first)
-    //   getPosition(name)               — 1-based position in line, or -1 if absent
-    //   estimatedWaitTime(name, avgServiceMin) — parties ahead × avgServiceMin
-    //   getStats()                      — queue depth, total size waiting
-    //
-    // Design:
-    //   • LinkedList<Party> as the FIFO queue (O(1) add-to-tail, O(1) remove head).
-    //   • HashMap<name, Party> for O(1) position look-up and cancellation.
-    //   • seatNextFitting: linear scan from front — first-fit policy.
-    //     Parties behind a party that is too large for the current table are
-    //     skipped, which is realistic (host checks next smaller party).
-    //   • Duplicate party names are rejected.
-    //
-    // Complexity: addParty O(1), seatNextFitting O(n), removeParty O(n),
-    //             getPosition O(n), getWaitlist O(n).
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * An immutable snapshot of a waiting party.
+     */
     static class Party {
+        /** The party's name (used as unique key). */
         final String name;
-        final int    size;
-        final long   arrivedAt; // epoch ms, for estimated wait display
 
+        /** Number of people in the party. */
+        final int    size;
+
+        /** Epoch-ms when the party joined the waitlist (used for estimated wait display). */
+        final long   arrivedAt;
+
+        /**
+         * @param name unique party name
+         * @param size number of people
+         */
         Party(String name, int size) {
             this.name      = name;
             this.size      = size;
@@ -46,11 +45,22 @@ public class RestaurantWaitlist {
         }
     }
 
+    /** FIFO queue of waiting parties; head = first to arrive. */
     private final LinkedList<Party>    queue   = new LinkedList<>();
+
+    /** Index for O(1) party lookup by name; also serves as duplicate guard. */
     private final Map<String, Party>   byName  = new HashMap<>();
 
     // ── Public API ────────────────────────────────────────────────────────────
 
+    /**
+     * Adds a party to the end of the waitlist.
+     *
+     * @param name unique party name; duplicates are rejected with a warning
+     * @param size number of people (must be &gt; 0)
+     * @return {@code true} if added; {@code false} if the party is already on the list
+     * @throws IllegalArgumentException if size is not positive
+     */
     public boolean addParty(String name, int size) {
         if (size <= 0) throw new IllegalArgumentException("Party size must be > 0");
         if (byName.containsKey(name)) {
@@ -63,7 +73,13 @@ public class RestaurantWaitlist {
         return true;
     }
 
-    // Seat the first party from the front whose size fits the table.
+    /**
+     * Scans from the front and seats the first party whose size fits the available table.
+     * Parties behind an oversized group are skipped (first-fit policy).
+     *
+     * @param tableCapacity the number of seats at the available table
+     * @return the seated {@link Party}, or {@code null} if no waiting party fits
+     */
     public Party seatNextFitting(int tableCapacity) {
         Iterator<Party> it = queue.iterator();
         while (it.hasNext()) {
@@ -77,7 +93,12 @@ public class RestaurantWaitlist {
         return null; // no party fits current table
     }
 
-    // Cancel — party left the waitlist voluntarily.
+    /**
+     * Removes a party from the waitlist (voluntary cancellation).
+     *
+     * @param name the party to remove
+     * @return {@code true} if found and removed; {@code false} if the name was not on the list
+     */
     public boolean removeParty(String name) {
         Party p = byName.remove(name);
         if (p == null) return false;
@@ -85,7 +106,12 @@ public class RestaurantWaitlist {
         return true;
     }
 
-    // 1-based position, or -1 if not in line.
+    /**
+     * Returns the 1-based position of the party in the waitlist.
+     *
+     * @param name the party to look up
+     * @return 1-based position, or {@code -1} if the party is not in the queue
+     */
     public int getPosition(String name) {
         int pos = 1;
         for (Party p : queue) {
@@ -95,18 +121,33 @@ public class RestaurantWaitlist {
         return -1;
     }
 
-    // Estimated wait = number of parties ahead × average service time per party.
+    /**
+     * Estimates how many minutes the party will wait, based on parties ahead of them.
+     *
+     * @param name               the party to estimate for
+     * @param avgServiceMinutes  average number of minutes each party ahead takes
+     * @return estimated wait in minutes, or {@code -1} if the party is not in the queue
+     */
     public double estimatedWaitTime(String name, double avgServiceMinutes) {
         int pos = getPosition(name);
         if (pos == -1) return -1;
         return (pos - 1) * avgServiceMinutes; // parties before this one
     }
 
+    /**
+     * Returns a snapshot of all parties currently on the waitlist in arrival order.
+     *
+     * @return new list; modifying it does not affect the waitlist
+     */
     public List<Party> getWaitlist() { return new ArrayList<>(queue); }
 
+    /** Returns the number of parties currently waiting. */
     public int size()           { return queue.size(); }
+
+    /** Returns {@code true} if there are no waiting parties. */
     public boolean isEmpty()    { return queue.isEmpty(); }
 
+    /** Prints the waitlist in arrival order with 1-based positions. */
     public void printWaitlist() {
         if (queue.isEmpty()) { System.out.println("  (waitlist empty)"); return; }
         int pos = 1;

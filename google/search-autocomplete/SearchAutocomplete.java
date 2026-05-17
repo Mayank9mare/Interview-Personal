@@ -1,53 +1,69 @@
 import java.util.*;
 
+/**
+ * Entry point demonstrating {@link AutocompleteSystem}.
+ * Compile: {@code javac SearchAutocomplete.java}  Run: {@code java SearchAutocomplete}
+ */
 public class SearchAutocomplete {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Search Autocomplete System — Google interview problem (LeetCode 642)
-    //
-    // Simulates Google Search's type-ahead: as the user types character by
-    // character, return the top-3 historical sentences matching the current prefix.
-    //
-    // Ranking: higher frequency first; ties broken lexicographically (ascending).
-    //
-    // API:
-    //   AutocompleteSystem(String[] sentences, int[] times) — seed with history
-    //   List<String> input(char c)  — type one character; '#' submits the query
-    //     '#' records the current typed string as a new sentence (freq +1)
-    //     and resets the current prefix. Returns empty list.
-    //     Any other char appends to prefix and returns top-3 matching sentences.
-    //
-    // Design:
-    //   • Trie for O(P) prefix lookup (P = prefix length).
-    //   • Each TrieNode stores a Map<sentence, frequency> of all sentences
-    //     passing through it — so getSuggestions is O(k log k) at the prefix node
-    //     (k = unique sentences with that prefix), not a DFS over all leaves.
-    //   • When a sentence is added/incremented, walk its path and update every
-    //     node's freq map in O(L) where L = sentence length.
-    //
-    // Complexity: input(c) O(L + k log k) where L = current prefix length,
-    //             k = number of matching sentences.
-    //             Space: O(total characters across all sentences).
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /**
+     * Type-ahead autocomplete system backed by a Trie (LeetCode 642).
+     *
+     * <p>As the user types one character at a time, returns the top-3 historical sentences
+     * matching the current prefix. Ranking: higher frequency first; ties broken
+     * lexicographically (ascending).
+     *
+     * <p>Core data structure: each {@link TrieNode} stores a {@code Map<sentence, frequency>}
+     * for all sentences whose path passes through it. This allows {@code getSuggestions} to
+     * sort directly at the prefix node in O(k log k) rather than performing a DFS over all leaves.
+     *
+     * <p>When a sentence is added or incremented, every node along its path updates its frequency
+     * map in O(L) where L = sentence length.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class AutocompleteSystem {
         private static final int TOP_K = 3;
 
+        /**
+         * Trie node holding child links and an aggregated frequency map for all sentences
+         * whose prefix passes through this node.
+         */
         private static class TrieNode {
+            /** Child nodes keyed by character. */
             final Map<Character, TrieNode>  children = new HashMap<>();
-            // All sentences passing through this node and their frequencies
+
+            /** All sentences passing through this node mapped to their accumulated frequencies. */
             final Map<String, Integer>      freq     = new HashMap<>();
         }
 
+        /** Root of the Trie (empty-prefix node). */
         private final TrieNode root = new TrieNode();
+
+        /** Characters typed so far since the last {@code '#'} submission. */
         private final StringBuilder currentInput = new StringBuilder();
 
+        /**
+         * Initialises the system with historical sentences and their hit counts.
+         *
+         * @param sentences array of historical query strings
+         * @param times     corresponding frequencies (same length as {@code sentences})
+         */
         public AutocompleteSystem(String[] sentences, int[] times) {
             for (int i = 0; i < sentences.length; i++)
                 addSentence(sentences[i], times[i]);
         }
 
-        // Type one character. Returns top-3 completions, or [] on '#'.
+        /**
+         * Processes one typed character.
+         *
+         * <p>If {@code c == '#'}: records the current buffer as a new sentence (freq += 1),
+         * resets the buffer, and returns an empty list.
+         * Otherwise: appends to the buffer and returns the top-3 matching sentences.
+         *
+         * @param c the typed character
+         * @return top-3 completions sorted by frequency desc then lex asc, or empty on {@code '#'}
+         */
         public List<String> input(char c) {
             if (c == '#') {
                 addSentence(currentInput.toString(), 1);
@@ -60,6 +76,7 @@ public class SearchAutocomplete {
 
         // ── Internals ─────────────────────────────────────────────────────────
 
+        /** Inserts {@code sentence} into the Trie and increments every node's freq by {@code count}. */
         private void addSentence(String sentence, int count) {
             TrieNode node = root;
             for (char ch : sentence.toCharArray()) {
@@ -69,6 +86,13 @@ public class SearchAutocomplete {
             }
         }
 
+        /**
+         * Returns up to {@link #TOP_K} sentences whose prefix matches {@code prefix},
+         * ranked by frequency descending then lexicographically ascending.
+         *
+         * @param prefix the current typed prefix
+         * @return sorted suggestion list (empty if no match)
+         */
         private List<String> getSuggestions(String prefix) {
             TrieNode node = root;
             for (char ch : prefix.toCharArray()) {

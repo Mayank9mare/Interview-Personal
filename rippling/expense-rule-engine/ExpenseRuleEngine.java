@@ -1,45 +1,43 @@
 import java.util.*;
 import java.util.stream.*;
 
+/**
+ * Entry point demonstrating {@link RuleEngine}.
+ * Compile: {@code javac ExpenseRuleEngine.java}  Run: {@code java ExpenseRuleEngine}
+ */
 public class ExpenseRuleEngine {
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Expense Rule Engine
-    //
-    // Validates corporate expense submissions against a configurable set of
-    // business rules (think Rippling's expense policy management).
-    //
-    //   addRule(Rule)               — register a policy rule
-    //   validate(Expense)           — fail-fast: first violated rule
-    //   validateAll(Expense)        — collect ALL violations (for error display)
-    //   validateBatch(List<Expense>) — validate a list, return per-expense results
-    //
-    // Built-in rule types:
-    //   MaxAmountRule(limit)               — single expense ≤ limit
-    //   AllowedCategoryRule(categories)    — category must be in approved list
-    //   MaxPerCategoryRule(cat, limit)     — category-specific cap
-    //   RequireReceiptAboveRule(threshold) — receipt required when amount > threshold
-    //   BlockedVendorRule(vendors)         — vendor must not be on blocklist
-    //
-    // Design:
-    //   Rule is a functional interface → lambdas or named classes both work.
-    //   ValidationResult carries (passed, reason) so callers get actionable messages.
-    //   Engine stores rules in insertion order; validate() short-circuits on first fail.
-    //
-    // Extensibility (open/closed principle):
-    //   Add any new rule by implementing Rule — no engine changes needed.
-    //   Rules compose: CombinedRule(r1, r2) = r1 AND r2.
-    // ═══════════════════════════════════════════════════════════════════════════
 
     // ── Domain model ─────────────────────────────────────────────────────────
 
+    /**
+     * Immutable representation of a corporate expense submission.
+     *
+     * <p>Category and vendor are normalised to uppercase on construction so rule
+     * implementations can use case-insensitive comparisons without extra ceremony.
+     */
     static class Expense {
+        /** Unique expense identifier. */
         final String id;
-        final String category;      // e.g. "TRAVEL", "MEALS", "SOFTWARE"
+
+        /** Expense category, e.g. {@code "TRAVEL"}, {@code "MEALS"}. Stored uppercase. */
+        final String category;
+
+        /** Vendor name. Stored uppercase. */
         final String vendor;
-        final double amount;        // USD
+
+        /** Total expense amount in USD. */
+        final double amount;
+
+        /** Whether the submission includes a receipt. */
         final boolean hasReceipt;
 
+        /**
+         * @param id         unique identifier
+         * @param category   expense category (normalised to uppercase)
+         * @param vendor     vendor name (normalised to uppercase)
+         * @param amount     total amount in USD
+         * @param hasReceipt whether a receipt was attached
+         */
         Expense(String id, String category, String vendor, double amount, boolean hasReceipt) {
             this.id = id;
             this.category = category.toUpperCase();
@@ -54,21 +52,42 @@ public class ExpenseRuleEngine {
         }
     }
 
+    /**
+     * Outcome of applying one rule to one expense.
+     *
+     * <p>Carries a human-readable {@code reason} when the rule fails, enabling
+     * batch UIs to display all policy violations at once.
+     */
     static class ValidationResult {
+        /** Whether the expense satisfied this rule. */
         final boolean passed;
+
+        /** Name of the rule that produced this result. */
         final String ruleName;
+
+        /** Explanation of the failure; empty string on success. */
         final String reason;
 
+        /** Private — use {@link #ok} or {@link #fail} factory methods. */
         private ValidationResult(boolean passed, String ruleName, String reason) {
             this.passed = passed;
             this.ruleName = ruleName;
             this.reason = reason;
         }
 
+        /**
+         * @param ruleName the rule that passed
+         * @return a passing result
+         */
         static ValidationResult ok(String ruleName) {
             return new ValidationResult(true, ruleName, "");
         }
 
+        /**
+         * @param ruleName the rule that failed
+         * @param reason   human-readable explanation
+         * @return a failing result
+         */
         static ValidationResult fail(String ruleName, String reason) {
             return new ValidationResult(false, ruleName, reason);
         }
@@ -81,16 +100,34 @@ public class ExpenseRuleEngine {
 
     // ── Rule interface ────────────────────────────────────────────────────────
 
+    /**
+     * A single validation policy applied to an {@link Expense}.
+     *
+     * <p>A functional interface — implementations can be lambdas, anonymous classes,
+     * or named classes. Adding a new rule requires only a new implementation; the
+     * {@link RuleEngine} needs no modification (Open-Closed Principle).
+     */
     @FunctionalInterface
     interface Rule {
+        /**
+         * Evaluates whether {@code expense} satisfies this rule.
+         *
+         * @param expense the expense to evaluate
+         * @return a {@link ValidationResult} indicating pass or fail with reason
+         */
         ValidationResult validate(Expense expense);
+
+        /** Returns a display name for this rule; defaults to the class simple name. */
         default String name() { return getClass().getSimpleName(); }
     }
 
     // ── Built-in rule implementations ─────────────────────────────────────────
 
+    /** Rejects expenses whose {@code amount} exceeds the configured limit. */
     static class MaxAmountRule implements Rule {
         private final double limit;
+
+        /** @param limit maximum allowed expense amount in USD */
         MaxAmountRule(double limit) { this.limit = limit; }
 
         @Override public ValidationResult validate(Expense e) {
@@ -102,8 +139,11 @@ public class ExpenseRuleEngine {
         @Override public String name() { return "MaxAmount($" + limit + ")"; }
     }
 
+    /** Rejects expenses whose category is not in the approved set. */
     static class AllowedCategoryRule implements Rule {
         private final Set<String> allowed;
+
+        /** @param categories varargs of approved category strings (case-insensitive) */
         AllowedCategoryRule(String... categories) {
             allowed = new HashSet<>(Arrays.asList(categories));
         }
@@ -117,9 +157,15 @@ public class ExpenseRuleEngine {
         @Override public String name() { return "AllowedCategory(" + allowed + ")"; }
     }
 
+    /** Rejects expenses in a specific category that exceed a per-category cap. */
     static class MaxPerCategoryRule implements Rule {
         private final String category;
         private final double limit;
+
+        /**
+         * @param category the category this cap applies to
+         * @param limit    maximum allowed amount for that category in USD
+         */
         MaxPerCategoryRule(String category, double limit) {
             this.category = category.toUpperCase();
             this.limit = limit;
@@ -136,8 +182,11 @@ public class ExpenseRuleEngine {
         @Override public String name() { return "MaxPerCategory(" + category + ",$" + limit + ")"; }
     }
 
+    /** Requires a receipt for any expense exceeding the configured threshold. */
     static class RequireReceiptAboveRule implements Rule {
         private final double threshold;
+
+        /** @param threshold minimum amount (exclusive) that requires a receipt */
         RequireReceiptAboveRule(double threshold) { this.threshold = threshold; }
 
         @Override public ValidationResult validate(Expense e) {
@@ -151,8 +200,11 @@ public class ExpenseRuleEngine {
         @Override public String name() { return "RequireReceiptAbove($" + threshold + ")"; }
     }
 
+    /** Rejects expenses from vendors on a blocklist. */
     static class BlockedVendorRule implements Rule {
         private final Set<String> blocked;
+
+        /** @param vendors varargs of blocked vendor names (case-insensitive) */
         BlockedVendorRule(String... vendors) {
             blocked = new HashSet<>(Arrays.asList(vendors));
         }
@@ -167,12 +219,31 @@ public class ExpenseRuleEngine {
 
     // ── Engine ────────────────────────────────────────────────────────────────
 
+    /**
+     * Policy engine that evaluates a set of {@link Rule}s against expense submissions.
+     *
+     * <p>Rules are stored in insertion order. {@link #validate} short-circuits on the
+     * first failure; {@link #validateAll} collects every violation for richer error UIs.
+     *
+     * <p>Thread safety: Not thread-safe.
+     */
     static class RuleEngine {
+        /** Ordered list of registered policy rules. */
         private final List<Rule> rules = new ArrayList<>();
 
+        /**
+         * Registers a policy rule. Rules are evaluated in the order they are added.
+         *
+         * @param rule the rule to add
+         */
         public void addRule(Rule rule) { rules.add(rule); }
 
-        // Fail-fast: returns first failure, or success if all pass
+        /**
+         * Validates {@code expense} against all rules, returning on the first failure.
+         *
+         * @param expense the expense to validate
+         * @return the first failing {@link ValidationResult}, or a passing result if all pass
+         */
         public ValidationResult validate(Expense expense) {
             for (Rule rule : rules) {
                 ValidationResult result = rule.validate(expense);
@@ -181,7 +252,12 @@ public class ExpenseRuleEngine {
             return ValidationResult.ok("ALL_RULES");
         }
 
-        // Collect ALL violations (better UX: show user everything wrong at once)
+        /**
+         * Validates {@code expense} against all rules, collecting every violation.
+         *
+         * @param expense the expense to validate
+         * @return list of all failing results, or a single passing result if all rules pass
+         */
         public List<ValidationResult> validateAll(Expense expense) {
             List<ValidationResult> failures = rules.stream()
                 .map(r -> r.validate(expense))
@@ -192,13 +268,23 @@ public class ExpenseRuleEngine {
                 : failures;
         }
 
-        // Validate a batch; returns map of expense-id → list of results
+        /**
+         * Validates a list of expenses, returning a map of expenseId → violations.
+         *
+         * @param expenses the expenses to validate
+         * @return insertion-ordered map from expense ID to all its validation results
+         */
         public Map<String, List<ValidationResult>> validateBatch(List<Expense> expenses) {
             Map<String, List<ValidationResult>> report = new LinkedHashMap<>();
             for (Expense e : expenses) report.put(e.id, validateAll(e));
             return report;
         }
 
+        /**
+         * Prints a human-readable approval/rejection report for each expense.
+         *
+         * @param expenses the expenses to report on
+         */
         public void printBatchReport(List<Expense> expenses) {
             Map<String, List<ValidationResult>> report = validateBatch(expenses);
             System.out.println("=== Expense Validation Report ===");

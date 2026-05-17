@@ -1,42 +1,44 @@
 import java.util.*;
 import java.util.concurrent.locks.*;
 
+/**
+ * Thread-safe tracker of modified memory blocks for incremental-backup use cases.
+ *
+ * <p>Each logical block is {@value #BLOCK_BYTES} bytes. Changed ranges are maintained in a
+ * {@link TreeMap}{@code <start, end>} that is always kept in fully-merged form: no two stored
+ * ranges overlap or are adjacent to one another.
+ *
+ * <p>Merge invariant: after every {@link #markChanged} call, the map contains the minimal
+ * set of non-overlapping, non-adjacent ranges covering all blocks that have been marked.
+ * Adjacent ranges ({@code [1,4]} + {@code [5,7]}) are merged into {@code [1,7]}.
+ *
+ * <p>Thread safety: {@link java.util.concurrent.locks.ReentrantReadWriteLock} — many concurrent
+ * readers ({@link #getChangedRanges}, {@link #changedBlockCount}), exclusive writers
+ * ({@link #markChanged}, {@link #reset}).
+ */
 public class MemoryBlockTracker {
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // Memory Block Tracker
-    //
-    // Problem: A storage system tracks which memory blocks have been modified
-    // (e.g., for incremental backup). Each block = 64 bytes. Multiple threads
-    // concurrently mark ranges as changed. At snapshot time, return the minimal
-    // set of merged, non-overlapping changed ranges.
-    //
-    // API:
-    //   markChanged(start, end)  — mark blocks [start..end] (inclusive) changed
-    //   getChangedRanges()       — returns list of merged [start, end] ranges
-    //   reset()                  — clear all tracked changes
-    //
-    // Design:
-    //   • TreeMap<Integer,Integer>: start → end, always maintained in merged form.
-    //   • On markChanged(s, e): walk the map to absorb all overlapping or
-    //     adjacent ranges into one, then insert the merged range.
-    //     "Adjacent" means [1,4] + [5,7] → [1,7] (no gap between blocks).
-    //   • ReentrantReadWriteLock: multiple concurrent readers, exclusive writers.
-    //
-    // Merge invariant: after every write the map has no overlapping/adjacent ranges.
-    // Complexity: markChanged O(k log n) where k = ranges absorbed; typically O(log n).
-    //             getChangedRanges O(n).
-    // ═══════════════════════════════════════════════════════════════════════════
-
+    /** Size in bytes of each tracked block. */
     private static final int BLOCK_BYTES = 64;
 
+    /**
+     * Merged changed-range index: block-start → block-end (inclusive).
+     * Invariant: no two entries overlap or are adjacent; maintained on every write.
+     */
     private final TreeMap<Integer, Integer>  ranges  = new TreeMap<>();
+
     private final ReentrantReadWriteLock     rwLock  = new ReentrantReadWriteLock();
     private final Lock                       rLock   = rwLock.readLock();
     private final Lock                       wLock   = rwLock.writeLock();
 
-    // Mark blocks [start, end] (inclusive) as changed.
-    // Merges with any overlapping or adjacent existing ranges.
+    /**
+     * Marks blocks {@code [start, end]} (inclusive) as changed, merging with any
+     * overlapping or adjacent ranges already in the tracker.
+     *
+     * @param start first block in the range (must be &le; {@code end})
+     * @param end   last block in the range
+     * @throws IllegalArgumentException if {@code start > end}
+     */
     public void markChanged(int start, int end) {
         if (start > end) throw new IllegalArgumentException("start must be <= end");
         wLock.lock();
@@ -56,7 +58,12 @@ public class MemoryBlockTracker {
         }
     }
 
-    // Returns a snapshot of all merged changed ranges as [start, end] pairs.
+    /**
+     * Returns a snapshot of all merged changed ranges as {@code [start, end]} pairs.
+     * Multiple threads may call this concurrently.
+     *
+     * @return list of two-element arrays {@code {start, end}} in ascending start order
+     */
     public List<int[]> getChangedRanges() {
         rLock.lock();
         try {
@@ -69,13 +76,18 @@ public class MemoryBlockTracker {
         }
     }
 
+    /** Clears all tracked changes. Subsequent {@link #getChangedRanges} returns an empty list. */
     public void reset() {
         wLock.lock();
         try { ranges.clear(); }
         finally { wLock.unlock(); }
     }
 
-    // Total number of changed blocks across all ranges
+    /**
+     * Returns the total number of changed blocks across all merged ranges.
+     *
+     * @return sum of {@code (end - start + 1)} over every range
+     */
     public long changedBlockCount() {
         rLock.lock();
         try {
@@ -88,6 +100,11 @@ public class MemoryBlockTracker {
         }
     }
 
+    /**
+     * Prints all changed ranges with block numbers and corresponding byte offsets.
+     *
+     * @param label heading printed before the range list
+     */
     public void printRanges(String label) {
         List<int[]> list = getChangedRanges();
         System.out.println(label);
