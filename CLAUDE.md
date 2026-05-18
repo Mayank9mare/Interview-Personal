@@ -145,6 +145,39 @@ questions.md                ← Problem list / interview question log
 - `removeParty(name)`: cancellation — O(n) `queue.remove(p)`; mention O(1) upgrade via `LinkedHashMap` if asked.
 - `estimatedWaitTime(name, avgMin)`: `(position - 1) × avgMin`.
 
+### Google — High-Frequency DSA Problems (seen 2+ times across 130+ posts)
+Full catalog: `google/GooglePrep.md`
+- **Trie autocomplete** (4+ ×): each TrieNode holds `Map<sentence,freq>`; top-k at prefix node. Fuzzy variant: BK-Tree (edit distance).
+- **LC 1293** Shortest Path in Grid with Obstacles Elimination (3×): BFS + state = (row, col, removalsLeft).
+- **LC 2402** Meeting Rooms III + **LC 1882** Process Tasks Using Servers (3×): two min-heaps (available by id, busy by endTime).
+- **Restaurant Waitlist** (3×): FIFO `LinkedList` + `HashMap` for O(1) lookup; `seatNextFitting(cap)` linear scan.
+- **BFS router/WiFi broadcast** (3×): standard BFS from source, mark visited, return reachable.
+- **LC 818** Race Car (2×): BFS over (position, speed) state OR DP.
+- **LC 239** Sliding Window Maximum (2×): monotonic deque, O(n).
+- **LRU Cache / variant** LC 146 (2×): DLL + HashMap; recent-search variant moves duplicate to front.
+- **Rate limiter** dual-window minute+hour (2×): two `Deque`s; pop expired entries before checking limits.
+- **Huffman tree** construction/decoding (2×): min-heap by freq; leaf nodes at depth = code length.
+- **File/folder compression** (2×): DFS; replace subtree with folder name if all children selected.
+- **String % substitution** (2×): HashMap lookup between `%` delimiters; handle `%%` → literal `%`.
+
+### Google — DSA Topics with Key LeetCode Numbers
+- **Graphs**: LC 863, 947, 1293 (×3), 2050, 2115; novel: multi-source Dijkstra, BFS router broadcast, 3-island max value.
+- **Trees**: LC 366, 872, 1666, 2096, 2265; novel: number of islands in tree, N-ary stored as array, Gmail label paths.
+- **DP**: LC 312, 518, 679, 818 (×2), 875, 1048, 174; novel: coin change recovery, jump game max score, apartment hunting 2-pass.
+- **Heap**: LC 215, 295, 1834, 1882, 2402 (×3), 2534; novel: patient queue min-id, insurance counter.
+- **Intervals / Line Sweep**: LC 57, 715, 729, 732, 986, 2158; novel: APK SDK range partitioning, vertical cake cut.
+- **Trie / String**: LC 2185; novel: arithmetic expression evaluator, formula parenthesis simplification, MergeDedupingIterator.
+- **Sliding Window / Monotonic**: LC 239 (×2), 315, 1776, 853; novel: 1D array max-value pairs with constraint.
+- **Design / LLD-lite**: LC 146 (×2), 348; novel: recent-search DS, rate limiter dual-window, parking lot insert-interval.
+
+### Google — Follow-up Escalation Pattern
+Almost every problem has a follow-up. Common escalation ladder:
+1. Brute force → optimal (interviewer asks for better complexity)
+2. Single source → multi-source (add more starting nodes)
+3. Unweighted → weighted (switch BFS → Dijkstra)
+4. One query → many queries (precompute / Segment Tree)
+5. Single-threaded → thread-safe (add locks / concurrent DS)
+
 ### Rubrik — Interview Round Structure
 - **Rubrik's system coding round explicitly bans** `BlockingQueue`, `ConcurrentHashMap`, and other concurrent collections. Build thread safety from raw primitives: `ReentrantLock`, `Condition`, `synchronized`, `wait`/`notifyAll`.
 - Debugging round: given broken multithreaded code (Producer-Consumer or banking app), find race conditions and fix them.
