@@ -264,6 +264,42 @@ Almost every problem has a follow-up. Common escalation ladder:
 - Follow-up "concurrent access": one `ReentrantLock` per locker size (finer grain than a single global lock).
 - Complexity: O(1) assign/open, O(n) releaseExpired where n = currently assigned lockers.
 
+### Amazon — High-Frequency DSA Problems (seen 3+ times across 92 posts)
+Full catalog: `amazon/AmazonPrep.md`
+- **3-page web visit sequence** (3+×): HashMap per user → sort by timestamp → sliding window of 3, count with frequency map. LC 1152.
+- **Locker System** (3+×): `EnumMap<Size, Queue<Locker>>` for O(1) assign; `codeToLocker` HashMap for O(1) retrieve. Already in `amazon/locker-system/`.
+- **Unix File Search** (3+×): Strategy pattern `SearchCriteria` @FunctionalInterface; `registerCriteria(id, lambda)`. Already in `amazon/unix-find/`.
+- **Word Break II** (3+×): Bar Raiser staple. Trie + backtracking or DP. LC 140.
+- **Currency Exchange / Evaluate Division** (3+×): Build graph of currencies; BFS/DFS per query; mention Floyd-Warshall for all-pairs precompute. LC 399.
+- **Task Scheduler Design** (3+×): `add(task, priority)` + `fetch()` → min-heap ordered by priority; follow-up: periodic tasks (re-enqueue after run).
+- **Delivery Centers OA** (3+×): Sort centers; for each candidate location use prefix sums to count how many centers are within distance d. Real Amazon OA.
+- **Remove Smallest + Replace with Neighbor Sum** (3+×): Real Amazon OA; greedy / indexed heap simulation.
+- **Top K Items in Stream** (3+×): `(event_id, item_id, timestamp)` → HashMap count + min-heap for top K; follow-up: sliding window for last X hours.
+- **String Formatter** (3+×): Replace `{0}`, `{1}` with args list; validate index, throw `IllegalArgumentException` on out-of-range.
+- **Number of Islands** (3+×): BFS/DFS; Bar Raiser follow-up always asks for list of cluster sizes. LC 200.
+- **Word Ladder** (3+×): BFS with word-bank set; each neighbour = 1 char diff. LC 127.
+- **Currency Discount in String** (3+×): Parse string for `$\d+(\.\d+)?`, apply 20% off, reconstruct string. Business-wrapped easy.
+- **Multiply Large Strings** (3+×): Grade-school multiply; result array of size `m+n`; no BigInteger. LC 43.
+
+### Amazon — DSA Topics with Key LeetCode Numbers
+- **Graphs**: LC 127/126 (×3), 200 (×3), 210 (×3), 841, 994, 399 (×3), 827, 417, 2092, 743; novel: delivery station topo sort, currency exchange.
+- **Trees**: LC 124 (×3), 2385 (×2), 337, 1161, 103, 199, 333/1373, 1650/1740, 545; novel: burn tree, parent-pointer distance (linked-list intersection trick).
+- **DP**: LC 140 (×3 Bar Raiser), 198 (×3), 403, 410, 416, 45, 516; novel: 4D→3D matrix DP.
+- **Heap**: LC 460, 23, 295, 767 (×2); novel: top-K stream sliding window, task scheduler priority design.
+- **Intervals**: LC 56 (×3), 1011 (×2), 253/2402, 134; novel: minimum platforms, movie scheduling.
+- **String**: LC 140 (×3), 1152 (×3), 43 (×3), 438, 472, 165; novel: string formatter, currency discount, 3-page sequence.
+- **Design / LLD**: Locker (×3), Unix Find (×3), LRU 146 (×3), Task Scheduler, LFU 460, Insert-Delete-GetRandom 380.
+- **Array**: LC 239, 42, 152, 962, 1167, 410; novel: delivery centers OA, remove-smallest OA.
+
+### Amazon — OA Patterns (two problems, 90 min)
+Real Amazon OA problems that appear repeatedly — solve these cold before the interview:
+- Delivery centers (prefix sum + binary search on sorted centres array)
+- Remove smallest element, replace with sum of neighbours (greedy heap simulation)
+- Minimum subarray containing two target series (sliding window, like LC 76)
+- Maximum product subarray variation (LC 152)
+- Seats allocation (greedy)
+- Shipment imbalance (custom array/string)
+
 ### Slice — Interview Round Structure
 - Online Assessment: HackerRank, ~105 min — 15 MCQs (aptitude/quant) + 2 medium-hard coding problems.
 - Technical Round 1 (~1h): DSA fundamentals — linked list, stack, tree problems + project discussion.
