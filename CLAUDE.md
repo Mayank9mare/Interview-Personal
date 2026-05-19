@@ -300,6 +300,34 @@ Real Amazon OA problems that appear repeatedly — solve these cold before the i
 - Seats allocation (greedy)
 - Shipment imbalance (custom array/string)
 
+### Uber — Interview Round Structure
+- Rounds: OA (CodeSignal) → Phone Screen (1 hard DSA) → Algorithms DSA → Depth-in-Specialization / Machine Coding → HLD → HM / Bar Raiser.
+- Machine Coding round is the hardest: production-quality code with thread safety, run live in IDE. Java preferred for backend; TypeScript for frontend.
+- OA: CodeSignal platform, 3–4 problems (1 easy + 1–2 medium + 1 hard), 90–105 min. Scoring 600/600 is achievable.
+- Concurrency is explicitly tested at SDE2+: condition variables, synchronized blocks, or async Promises (frontend). Not banned like Rubrik.
+- Follow-up culture is very strong: each problem has 2–3 escalating follow-ups (O(N²) → O(N log N) → O(N)).
+- Full catalog: `UberPrep.md`
+
+### Uber — High-Frequency DSA Problems (seen 3+ times)
+- **Currency Exchange / Evaluate Division** (5+×, #1 most asked): LC 399. Build weighted graph; BFS from source currency. Follow-ups: disconnected → return -1; all-pairs → Floyd-Warshall; arbitrage → Bellman-Ford negative cycle.
+- **Bus Routes** (3+×): LC 815. BFS where each node is a bus route (set of stops); expand to all stops in a route. Follow-up: add transfer costs → Dijkstra.
+- **Meeting Room Scheduler** (4+×, #1 LLD): LC 729/253. N rooms; book events; follow-ups: capacity constraints, spillage minimization (prefer tightest-fit room), audit logs with expiry, concurrent requests.
+- **Parking Lot** (3+×): Multi-floor, bike + car spots; busy-time 4-bikes-in-car-spot rule. OOP hierarchy + EnumMap queues.
+- **Autocomplete with Top-K weighted completions** (3+×): LC 642. Trie + DFS + min-heap; update weights when user types a complete word.
+
+### Uber — DSA Topics with Key LeetCode Numbers
+- **Graphs**: LC 399 (×5+), 815 (×3+), 200, 210, 212, 236; novel: multi-source BFS with thief-radius, longest DAG path (Uber cab scenario), haunted house segment tree.
+- **Trees**: LC 114 (flatten, ×2), 98; novel: Morris traversal (O(1) space BST), tree two-player game DP (L5), version compatibility chain.
+- **DP**: LC 465 (×2), 295 (×2), 91/639, 174; novel: haunted house [L,R] constraints (segment tree), max K words/hr from stream.
+- **Arrays / Binary Search**: LC 977 + kth-smallest-square follow-up (×2), 767 (×2), 994 (OA), 2009; novel: next smallest palindrome (×2), sliding window min-of-max.
+- **LLD / Machine Coding**: Meeting Scheduler (×4), Parking Lot (×3), Cache+TTL+concurrency (×2), Text Editor Undo/Redo DLL (×2), Version Compatibility (×2, Uber-specific), Leaderboard cache+thread-safe (×2).
+
+### Uber — Version Compatibility (Uber-specific machine coding)
+- `addVersion(versionNum, isCompatibleWithPrev)` + `isCompatible(v1, v2)`.
+- Key insight: track a `groupId` counter; increment on each **incompatible** release. All versions in the same group are mutually compatible.
+- `isCompatible(v1, v2)` = `O(1)`: just compare `groupId[v1] == groupId[v2]`.
+- Seen in 2+ independent reports (2021 + 2022); confirmed Uber-specific, not on LeetCode.
+
 ### Slice — Interview Round Structure
 - Online Assessment: HackerRank, ~105 min — 15 MCQs (aptitude/quant) + 2 medium-hard coding problems.
 - Technical Round 1 (~1h): DSA fundamentals — linked list, stack, tree problems + project discussion.
