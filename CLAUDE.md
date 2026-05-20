@@ -69,6 +69,8 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   SliceDSA.cpp              — Linked List, Stack, Binary Tree, Arrays/Greedy, Graph
   expense-sharing/          ExpenseSharing.java
   task-scheduler/           TaskScheduler.java
+  library-management/       Maven project — Book/User/BorrowRecord models, LibraryService (per-book locks, deadlock-safe multi-borrow)
+  airport-runway/           Maven project — Runway/Flight/RunwayBooking models, RunwayBookingService (per-runway locks, safety-gap overlap detection)
 
 /<other-lld-folders>/       ← LLD problems (Java), one folder per problem
 
@@ -352,6 +354,30 @@ Real Amazon OA problems that appear repeatedly — solve these cold before the i
 - UNDO: peek history; if scheduledTime <= currentTime the task was already executed — report and skip. Otherwise remove from schedule.
 - TICK: increment time; remove and execute schedule.get(currentTime) if present.
 - Complexity: O(log n) addTask, O(k) tick where k = tasks due at that time, O(log n) undo.
+
+### Slice — Library Management (Maven project)
+- Maven project: `slice/library-management/`; compile with `javac` (no Maven binary needed) into `target/classes/`.
+- Core data: `ConcurrentHashMap<String, Book> books`, `ConcurrentHashMap<String, User> users`, `CopyOnWriteArrayList<BorrowRecord> history`.
+- `ConcurrentHashMap<String, ReentrantLock> bookLocks` — one lock per bookId, created lazily via `computeIfAbsent`.
+- **Deadlock prevention**: `borrowBooks` sorts bookIds lexicographically before acquiring locks — guarantees all threads acquire in same order.
+- **Constraint-2 fast-fail**: duplicate-active-borrow check done before any locks acquired (stream over history) — avoids holding locks during an unavoidable throw.
+- **Optimistic count check inside lock**: `book.getCount() <= 0` re-verified under lock even though it was visible outside — simulates `UPDATE … WHERE count>0` DB optimistic pattern.
+- `returnBook`: takes per-book lock, finds active `BORROWED` record in history, calls `markReturned()`, increments count.
+- `getAvailableSlots` / `searchBooks` use Java streams on `CopyOnWriteArrayList` — reads are lock-free.
+- Complexity: O(k log k) `borrowBooks` (sort k bookIds), O(n) `searchBooks`/`getBorrowHistory` where n = history size.
+
+### Slice — Airport Runway Booking (Maven project)
+- Maven project: `slice/airport-runway/`; same javac compile pattern.
+- Core data: `ConcurrentHashMap<String, Runway>`, `ConcurrentHashMap<String, Flight>`, `CopyOnWriteArrayList<RunwayBooking>`.
+- `ConcurrentHashMap<String, ReentrantLock> runwayLocks` — per-runway; different runways booked concurrently without contention.
+- **Safety gap**: `MIN_GAP_MINUTES = 5`; overlap check expands requested window by ±5 min before comparing against existing bookings — models real-world separation requirement.
+- **Overlap predicate**: `s1 < e2 && s2 < e1` (standard interval overlap).
+- `cancelBooking`: takes per-runway lock, sets `status = CANCELLED` (volatile field on `RunwayBooking`).
+- `getAvailableSlots(runwayId, windowStart, windowEnd, minDurationMinutes)`:
+  1. Collect confirmed bookings expanded by ±gap → busy intervals.
+  2. Sort + merge overlapping busy intervals.
+  3. Gaps between merged intervals that are ≥ `minDurationMinutes` are returned as free slots.
+- Complexity: O(n log n) `getAvailableSlots` (sort n bookings), O(n) `bookRunway` overlap scan.
 
 ## Git
 - Remote: `https://github.com/Mayank9mare/Interview-Personal.git`
