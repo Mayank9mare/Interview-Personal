@@ -1,4 +1,4 @@
-# Google Interview Prep — Problem Catalog
++# Google Interview Prep — Problem Catalog
 
 Sourced from 130+ real Google interview experience posts (LeetCode discuss, 2021–2024).
 Covers L3/L4/L5 onsite + phone screen rounds. Excludes internship posts.
@@ -41,6 +41,14 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Balance graph (distribute value to neighbours equally) | — | Medium | L3 Munich phone |
 | Directed graph: count nodes reachable from destination | — | Easy-Medium | L4 India onsite |
 | Minimum airports to connect all (MST / connected components) | — | Medium | L4 India phone |
+| Network Delay Time (Dijkstra on directed weighted graph) | 743 | Medium | L3/L4 phone warmup |
+| Cheapest Flights Within K Stops (Bellman-Ford / modified BFS) | 787 | Medium | L4 India onsite |
+| Min Cost to Connect All Points (Prim's / Kruskal MST) | 1584 | Medium | L4 phone / 2025 prep |
+| Redundant Connection (Union-Find cycle detection) | 684 | Medium | L4 2025 prep |
+| Redundant Connection II (directed graph, Union-Find) | 685 | Hard | L5 onsite |
+| Is Graph Bipartite? (BFS 2-coloring) | 785 | Medium | L4 screening 2025 |
+| Number of Ways to Arrive at Destination (Dijkstra + count DP) | 1976 | Medium | L4 phone 2025 |
+| Second Minimum Time to Reach Destination (BFS + multi-state) | 2045 | Hard | L4 California onsite 2025 |
 
 **Key follow-up pattern:** Start with BFS/DFS → interviewer asks to handle weighted edges (Dijkstra) → then handle multiple sources → then handle queries efficiently (Segment Tree / binary search).
 
@@ -69,6 +77,13 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Find Nodes problem (tree traversal) | — | Medium | L5 onsite |
 | Longest valid word (word ladder DP on dictionary) | — | Medium | L3 onsite |
 | Binary tree leaf values with max path to root | — | Easy | L3 onsite |
+| Binary Tree Maximum Path Sum (any-to-any path) | 124 | Hard | L4/L5 India onsite |
+| Serialize and Deserialize Binary Tree | 297 | Hard | L4/L5 onsite |
+| Delete Nodes and Return Forest | 1110 | Medium | L4 phone 2025 |
+| Maximum Width of Binary Tree (BFS with indexed positions) | 662 | Medium | L4 India onsite 2025 |
+| Minimum Time to Collect All Apples in a Tree | 1443 | Medium | L4 2025 prep |
+| Diameter of Binary Tree | 543 | Easy-Med | L3/L4 warmup |
+| Binary Tree Cameras (greedy post-order) | 968 | Hard | L5 onsite 2025 |
 
 **Pattern:** Google loves tree problems with interesting constraints — leaf operations, level-by-level processing, and tree → interval transformations.
 
@@ -95,6 +110,14 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Sum of all subarrays forming AP | — | Medium | L4 India onsite |
 | 24 Game | 679 | Hard | L4 US onsite |
 | Strobogrammatic Number II | 247 | Medium | L4 US onsite |
+| Longest Increasing Subsequence (also O(n log n) patience sort) | 300 | Medium | L4 India phone |
+| Longest Common Subsequence | 1143 | Medium | L4 2025 prep |
+| Edit Distance | 72 | Medium | L4 US onsite |
+| Word Break (DP + Trie) | 139 | Medium | L4 phone screen |
+| Word Break II (memo backtracking, return all sentences) | 140 | Hard | L4/L5 onsite |
+| Minimum Difficulty of a Job Schedule (DP + interval) | 1335 | Hard | L5 onsite 2025 |
+| Minimum Cost to Cut a Stick (interval DP) | 1547 | Hard | L5 onsite |
+| Palindrome Partitioning II (min cuts DP) | 132 | Hard | L4/L5 onsite |
 
 ---
 
@@ -113,6 +136,10 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Job sequencing (max profit within deadlines) | 1235-like | Medium | Phone screen |
 | Insurance counter / time for turn (min-id heap) | — | Medium | Phone screen |
 | BFS + min-heap combination | — | Medium | L5 onsite |
+| Merge K Sorted Lists (min-heap) | 23 | Hard | L4 India phone |
+| The Skyline Problem (heap + line sweep) | 218 | Hard | L5 onsite |
+| Sliding Window Median (two heaps) | 480 | Hard | L4/L5 phone screen |
+| Smallest Range Covering Elements from K Lists | 632 | Hard | L5 onsite 2025 |
 
 ---
 
@@ -134,6 +161,10 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Design calendar (available time slots) | — | Medium | L4 California onsite |
 | Summary ranges with K-distance merge | — | Medium | 2024 prep |
 | Interval splitting/loading data | — | Medium | L5 phone screen |
+| Non-overlapping Intervals (greedy: sort by end, min removals) | 435 | Medium | L4 India onsite |
+| Minimum Number of Arrows to Burst Balloons | 452 | Medium | L4 2025 prep |
+| Employee Free Time (merge N sorted interval lists) | 759 | Hard | L5 onsite |
+| Meeting Scheduler (find common free slot) | 1229 | Medium | L4 phone screen |
 
 ---
 
@@ -153,6 +184,12 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | In-place remove all A's and double all B's | — | Medium | L4 Bangalore onsite |
 | BK-Tree for edit-distance autocomplete | — | Hard | L4 Bangalore extra TPS |
 | MergeDedupingIterator (merge 2 unsorted iterators, dedup) | — | Medium | L4 California onsite |
+| Word Search II (Trie + DFS backtracking) | 212 | Hard | L4 phone screen |
+| Search Suggestions System (Trie prefix → top-3 sorted) | 1268 | Medium | L4 Bangalore phone |
+| Longest Palindromic Substring (expand-around-center / Manacher) | 5 | Medium | L3/L4 warmup |
+| Palindromic Substrings (count all) | 647 | Medium | L4 2025 prep |
+| Encode and Decode Strings | 271 | Medium | L4 onsite |
+| Design Add and Search Words Data Structure (Trie + regex) | 211 | Medium | L4 phone 2025 |
 
 ---
 
@@ -170,6 +207,12 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | First bad version variant (recursion) | 278-like | Medium | L3 Munich onsite |
 | Contained numbers in chunked stream | — | Medium | Phone screen |
 | Find indexes of 1s in hidden binary array | — | Hard | Phone screen |
+| Minimum Window Substring | 76 | Hard | L4 India onsite (very common) |
+| Longest Repeating Character Replacement | 424 | Medium | L4 phone / 2025 prep |
+| Permutation in String (anagram in substring) | 567 | Medium | L3/L4 warmup |
+| Max Consecutive Ones III (binary flip budget) | 1004 | Medium | L4 phone 2025 |
+| Sliding Window Median | 480 | Hard | L4/L5 phone screen |
+| Fruit Into Baskets (at most 2 distinct) | 904 | Medium | L3/L4 screening |
 
 ---
 
@@ -181,6 +224,13 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Card game 3-card pattern (backtracking on 12 cards) | — | Medium | L5 onsite |
 | Regular expression tree isMatch | — | Hard | Onsite |
 | Word search palindrome variant | 79-like | Medium | Onsite |
+| Permutations I / II (duplicates) | 46/47 | Medium | L3/L4 onsite |
+| Subsets I / II | 78/90 | Medium | L3/L4 onsite |
+| Combination Sum I / II | 39/40 | Medium | L3/L4 onsite |
+| Palindrome Partitioning (all valid partitions) | 131 | Medium | L4 India onsite 2025 |
+| Generate Parentheses | 22 | Medium | L3/L4 warmup |
+| Letter Combinations of a Phone Number | 17 | Medium | L3 phone warmup |
+| N-Queens | 51 | Hard | L5 onsite |
 
 ---
 
@@ -197,6 +247,11 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | User model + friendship recommendation | Social Graph | Medium | L3 onsite |
 | Design stock DS (MIN/MAX/current with historical updates) | Design | Hard | L4 India onsite |
 | Closest nodes queries in BST | 2476 | Medium | L4 phone |
+| Insert Delete GetRandom O(1) | 380 | Medium | L4 India onsite |
+| LFU Cache | 460 | Hard | L5 onsite |
+| All O'one Data Structure (O(1) inc/dec/getMax/getMin) | 432 | Hard | L5 onsite |
+| Design In-Memory File System | 588 | Hard | L5 onsite |
+| Flatten Nested List Iterator | 341 | Medium | L4 phone screen |
 
 ---
 
@@ -222,6 +277,14 @@ HC (Hiring Committee) sees all feedback. One `No Hire` in a coding round usually
 | Prefix count in sorted string array (two binary searches) | 2185-like | Medium | L5 London onsite |
 | Huffman tree from char:depth map | — | Medium | Phone screen |
 | Card suit grouping (counting sort O(n)) | — | Easy | L4 India onsite |
+| Median of Two Sorted Arrays (binary search O(log min(m,n))) | 4 | Hard | L4/L5 phone / onsite |
+| Product of Array Except Self (prefix + suffix, no division) | 238 | Medium | L3/L4 onsite |
+| Subarray Sum Equals K (prefix sum + HashMap) | 560 | Medium | L4 India onsite |
+| Trapping Rain Water (two-pointer / monotonic stack) | 42 | Hard | L4 2025 prep |
+| Find Peak Element (binary search on unsorted) | 162 | Medium | L4 phone screen |
+| Jump Game II (greedy, min jumps) | 45 | Medium | L3/L4 onsite |
+| Largest Rectangle in Histogram (monotonic stack) | 84 | Hard | L5 onsite |
+| Basic Calculator II (stack-based expression) | 227 | Medium | L4 phone screen |
 
 ---
 
@@ -244,27 +307,32 @@ These appeared in 2+ independent reports — highest ROI to prepare:
 | String % substitution | — | 2× |
 | Rate limiter (dual-window) | — | 2× |
 | LRU Cache or variant | 146 | 2× |
+| Minimum Window Substring | 76 | High-freq |
+| Merge K Sorted Lists | 23 | High-freq |
+| Binary Tree Maximum Path Sum | 124 | High-freq |
+| Serialize/Deserialize Binary Tree | 297 | High-freq |
+| Word Break II | 140 | High-freq |
 
 ---
 
 ## Study Priority Order
 
 **Phase 1 — Core Patterns (do these first):**
-- Graphs: BFS, multi-source BFS, Dijkstra, Union-Find
-- Trees: DFS, LCA, level-order, leaf operations
-- Heap: streaming k-largest/smallest, room/task assignment
-- Trie: insert, prefix search, top-k autocomplete
+- Graphs: BFS, multi-source BFS, Dijkstra (LC 743, 787, 1584), Union-Find (LC 684), Bipartite (LC 785)
+- Trees: DFS, LCA, max path sum (LC 124), serialize/deserialize (LC 297), leaf ops
+- Heap: k-largest/smallest (LC 23, 215, 632), room/server assignment (LC 1882, 2402), skyline (LC 218)
+- Trie: insert, prefix search, top-k autocomplete, Word Search II (LC 212)
 
 **Phase 2 — Less Common but High Yield:**
-- Intervals: insert, merge, sweep (LC 57, 715, 732, 2158)
-- DP: coin change variants, knapsack, bitmask DP
-- Sliding window + monotonic deque
-- Backtracking: expression evaluation, game theory
+- Intervals: insert/merge (LC 57, 435, 452), sweep (LC 715, 732, 2158), free time (LC 759)
+- DP: LIS/LCS/edit distance (LC 300, 1143, 72), word break (LC 139/140), interval DP (LC 1335, 1547)
+- Sliding window: min window (LC 76), repeating (LC 424), median (LC 480)
+- Backtracking: permutations/subsets/combinations (LC 46/78/39), partitioning (LC 131), N-queens (LC 51)
 
 **Phase 3 — Design rounds (L4+):**
-- LRU Cache, rate limiter, calendar scheduler
-- Trie-backed autocomplete
-- Parking lot, restaurant waitlist
+- LRU (LC 146), LFU (LC 460), Insert-Delete-Random (LC 380), All-O'One (LC 432)
+- Rate limiter, Trie-backed autocomplete, In-memory file system (LC 588)
+- Parking lot, restaurant waitlist, calendar scheduler
 
 ---
 

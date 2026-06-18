@@ -56,6 +56,13 @@ for backend; TypeScript/React for frontend tracks. Concurrency questions are com
 | Lowest Common Ancestor | 236 | Medium | SWE intern round |
 | Tree value collection (two-player A↓ B↑ game) | — | Hard | L5 custom round |
 | Manager hierarchy CRUD (org tree) | — | Medium | L5 custom round |
+| Network Delay Time (Dijkstra on directed weighted graph) | 743 | Medium | SDE2 warmup / phone screen |
+| Cheapest Flights Within K Stops (Bellman-Ford / modified Dijkstra) | 787 | Medium | SDE2 DSA 2025 |
+| Min Cost to Connect All Points (Prim's / Kruskal MST) | 1584 | Medium | SDE2 phone 2025 |
+| Redundant Connection (Union-Find cycle detection) | 684 | Medium | SDE2 2025 prep |
+| Is Graph Bipartite? (BFS 2-coloring) | 785 | Medium | SDE1/SDE2 screening |
+| Clone Graph (BFS + HashMap) | 133 | Medium | SDE2 phone warmup |
+| Surrounded Regions (BFS flood fill from edges) | 130 | Medium | SDE2 onsite |
 
 **Currency conversion is essentially guaranteed for SDE2 DSA.** Know LC 399 cold, including:
 - Disconnected graph → return -1
@@ -72,6 +79,12 @@ for backend; TypeScript/React for frontend tracks. Concurrency questions are com
 | Validate BST | 98 | Easy | SDE2 screening |
 | BST in-order without recursion → Morris traversal follow-up | 94 | Hard | SSE depth-in-spec |
 | Version compatibility chain (addVersion/isCompatible) | — | Medium | SDE2 Machine Coding (2+ posts; unique to Uber) |
+| Binary Tree Maximum Path Sum (any-to-any path, post-order) | 124 | Hard | SDE2 India onsite |
+| Serialize and Deserialize Binary Tree | 297 | Hard | SDE2/SSE onsite |
+| Diameter of Binary Tree | 543 | Easy | SDE1 phone warmup |
+| Count Good Nodes in Binary Tree (root-to-node max) | 1448 | Medium | SDE1/SDE2 2025 prep |
+| Path Sum III (prefix sum on tree) | 437 | Medium | SDE2 phone 2025 |
+| Construct Binary Tree from Preorder and Inorder | 105 | Medium | SDE2 phone screen |
 
 **Version Compatibility** is a recurring Uber-specific machine coding problem: track compatibility
 groups — increment group ID on each incompatible release; `isCompatible(v1, v2)` = same group ID.
@@ -90,6 +103,14 @@ groups — increment group ID on each incompatible release; `isCompatible(v1, v2
 | 2D DP with multiple follow-ups | — | Hard | L4 fullstack coding |
 | Max K words per hour from infinite stream | ~692 | Hard | SDE2 DSA R1 |
 | Max substrings with per-character length constraints | — | Hard | SDE2 DSA R2 |
+| Coin Change (bottom-up DP) | 322 | Medium | SDE1/SDE2 warmup |
+| Longest Increasing Subsequence (also O(n log n) binary search) | 300 | Medium | SDE2 phone |
+| Longest Common Subsequence | 1143 | Medium | SDE2 2025 prep |
+| Edit Distance | 72 | Medium | SDE2 onsite |
+| Jump Game VI (sliding window DP / monotonic deque, O(N log N)→O(N)) | 1696 | Medium | SDE2 DSA follow-up |
+| Word Break (DP + Trie) | 139 | Medium | SDE2 2025 prep |
+| Burst Balloons (interval DP) | 312 | Hard | SSE onsite 2025 |
+| Unique Paths II (DP with obstacles) | 63 | Medium | SDE1 OA |
 
 ---
 
@@ -115,6 +136,15 @@ groups — increment group ID on each incompatible release; `isCompatible(v1, v2
 | Evaluate arithmetic expression string (nested add/sub/mul/div) | — | Medium | SDE2 India onsite |
 | Breaking Bad (longest matching chemical symbol in names) | — | Medium | SDE2 phone (Trie approach) |
 | Array comparison score (a[i]<a[i+1]→+1, a[i]>a[i+1]→+2) | — | Easy | SDE2 OA CodeSignal |
+| Minimum Window Substring | 76 | Hard | SDE2 DSA round 2025 |
+| Sliding Window Median (two heaps, O(n log n)) | 480 | Hard | SDE2/SSE phone screen |
+| Container With Most Water (two pointers) | 11 | Medium | SDE1/SDE2 warmup |
+| Subarray Sum Equals K (prefix sum + HashMap) | 560 | Medium | SDE2 2025 prep |
+| Median of Two Sorted Arrays (binary search O(log min(m,n))) | 4 | Hard | SSE phone screen |
+| Trapping Rain Water | 42 | Hard | SDE2 2025 prep |
+| 3Sum (two-pointer after sort) | 15 | Medium | SDE2 screening |
+| Maximum Product Subarray | 152 | Medium | SDE2 OA 2025 |
+| Find the Duplicate Number (Floyd's cycle detection) | 287 | Medium | SDE2 phone |
 
 ---
 
@@ -126,6 +156,25 @@ groups — increment group ID on each incompatible release; `isCompatible(v1, v2
 | Top K elements from N queues (front-pop only) | ~632 | Medium-Hard | SDE1 on-campus |
 | Random Pick with Weight | 528 | Medium | SSE onsite |
 | Top K frequent elements | 347 | Medium | SDE2 India |
+| Merge K Sorted Lists (min-heap) | 23 | Hard | SDE2 India onsite |
+| The Skyline Problem (heap + line sweep events) | 218 | Hard | SSE onsite 2025 |
+| Kth Largest Element in an Array (quickselect / heap) | 215 | Medium | SDE2 phone |
+| Task Scheduler (heap + greedy idle insertion) | 621 | Medium | SDE2 2025 prep |
+
+---
+
+## Backtracking / Recursion
+
+| Problem | LC# | Difficulty | Seen At |
+|---|---|---|---|
+| Permutations I / II | 46/47 | Medium | SDE1/SDE2 coding warmup |
+| Combination Sum I / II | 39/40 | Medium | SDE1/SDE2 warmup |
+| Subsets I / II | 78/90 | Medium | SDE1 phone |
+| Palindrome Partitioning | 131 | Medium | SDE2 onsite 2025 |
+| Generate Parentheses | 22 | Medium | SDE1 OA / warmup |
+| N-Queens | 51 | Hard | SSE onsite |
+| Sudoku Solver | 37 | Hard | SDE2/SSE onsite |
+| Word Break II (return all sentences) | 140 | Hard | SDE2 Bar Raiser |
 
 ---
 
@@ -195,13 +244,16 @@ CodeSignal format: 3–4 problems, 90–105 min. Scoring: 600/600 is possible.
 - **LC 399** Currency Exchange / Evaluate Division — know cold, practice all follow-ups
 - **LC 815** Bus Routes — BFS on sets of stops
 - **LC 295** Find Median from Data Stream — plus power-of-2 follow-up
+- **LC 76** Minimum Window Substring — classic hard sliding window
 - **LLD: Meeting Room Scheduler** — thread-safe, with interval tree or TreeMap
 - **LLD: Parking Lot** — multi-floor, OOP hierarchy, EnumMap queues
 
 **Phase 2 — High yield:**
-- Graphs: LC 200, 210, 212, 130; multi-source BFS patterns
-- Trees: LC 114 (flatten), 98 (validate BST), Morris traversal
-- Arrays: LC 977 + binary search follow-up, LC 767, LC 465
+- Graphs: LC 200, 210, 212, 130, 743, 787, 1584; multi-source BFS patterns
+- Trees: LC 114 (flatten), 98 (validate BST), 124 (max path sum), 297 (serialize)
+- Arrays: LC 977 + binary search follow-up, LC 767, LC 480 (sliding window median)
+- DP: LC 322, 300, 1143, 72 (edit distance), 1696 (Jump Game VI)
+- Backtracking: LC 46/78/39 warmup; LC 140 Word Break II for Bar Raiser
 - LLD: Cache with TTL, Text Editor (DLL + stacks), Version Compatibility
 
 **Phase 3 — SSE/L5 prep:**
@@ -209,6 +261,7 @@ CodeSignal format: 3–4 problems, 90–105 min. Scoring: 600/600 is possible.
 - Tree two-player game DP
 - Bank Settlement APIs + DB design
 - Concurrency: condition variables, keyed executor, producer-consumer
+- LC 218 Skyline Problem; LC 480 Sliding Window Median; LC 51 N-Queens
 
 ---
 
