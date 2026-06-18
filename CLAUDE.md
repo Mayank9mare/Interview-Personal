@@ -308,7 +308,7 @@ Real Amazon OA problems that appear repeatedly — solve these cold before the i
 - OA: CodeSignal platform, 3–4 problems (1 easy + 1–2 medium + 1 hard), 90–105 min. Scoring 600/600 is achievable.
 - Concurrency is explicitly tested at SDE2+: condition variables, synchronized blocks, or async Promises (frontend). Not banned like Rubrik.
 - Follow-up culture is very strong: each problem has 2–3 escalating follow-ups (O(N²) → O(N log N) → O(N)).
-- Full catalog: `UberPrep.md`
+- Full catalog: `uber/UberPrep.md`
 
 ### Uber — High-Frequency DSA Problems (seen 3+ times)
 - **Currency Exchange / Evaluate Division** (5+×, #1 most asked): LC 399. Build weighted graph; BFS from source currency. Follow-ups: disconnected → return -1; all-pairs → Floyd-Warshall; arbitrage → Bellman-Ford negative cycle.
