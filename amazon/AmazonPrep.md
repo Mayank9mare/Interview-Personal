@@ -72,6 +72,13 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Keys and Rooms | 841 | Medium | SDE1 onsite (2+×) |
 | Network Delay Time (Dijkstra) | 743 | Medium | SDE2 onsite |
 | Robot in N×M grid (obstacles, return actual path) | ~63 | Medium | SDE onsite (3+×) |
+| Redundant Connection (Union-Find cycle detection) | 684 | Medium | SDE2 2025 prep |
+| Redundant Connection II (directed, Union-Find) | 685 | Hard | SDE3 onsite |
+| Is Graph Bipartite? (BFS 2-coloring) | 785 | Medium | SDE2 screening 2025 |
+| Cheapest Flights Within K Stops (Bellman-Ford / BFS DP) | 787 | Medium | SDE2 onsite 2025 |
+| Min Cost to Connect All Points (Prim's / Kruskal MST) | 1584 | Medium | SDE2 phone 2025 |
+| Number of Ways to Arrive at Destination (Dijkstra + count) | 1976 | Medium | SDE2 2025 prep |
+| Clone Graph (BFS + HashMap) | 133 | Medium | SDE2 phone warmup |
 
 **Follow-up pattern:** BFS → weighted Dijkstra → precompute all-pairs (Floyd-Warshall).
 
@@ -98,6 +105,13 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Lowest Common Ancestor (with parent pointers) | 1650 | Medium | SDE2 onsite |
 | Delete Node in BST | 450 | Medium | SDE2 OA (2+×) |
 | Construct Tree from Inorder + Preorder | 105 | Medium | SDE interview R3 |
+| Serialize and Deserialize Binary Tree | 297 | Hard | SDE2/SDE3 onsite |
+| Maximum Width of Binary Tree (BFS with indexed positions) | 662 | Medium | SDE2 onsite 2025 |
+| Validate BST | 98 | Easy-Med | SDE2 phone warmup |
+| Balanced Binary Tree | 110 | Easy | SDE1 phone |
+| Minimum Time to Collect All Apples in a Tree | 1443 | Medium | SDE2 2025 prep |
+| Binary Tree Cameras (greedy post-order DP) | 968 | Hard | SDE3 onsite 2025 |
+| Recover Binary Search Tree (inorder swap detection) | 99 | Medium | SDE2 Bar Raiser 2025 |
 
 ---
 
@@ -117,6 +131,16 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | 4D Matrix DP → optimize to 3D | — | Hard | SDE2 R1/Bar Raiser (2+×) |
 | Scheduling: max points staying or travelling between cities | — | Medium-Hard | SDE2 Berlin phone |
 | Recursion + memoization (phone screen) | — | Medium-Hard | SDE2 phone (2+×) |
+| Longest Increasing Subsequence (O(n log n) binary search variant) | 300 | Medium | SDE2 onsite 2025 |
+| Longest Common Subsequence | 1143 | Medium | SDE2 2025 prep |
+| Edit Distance | 72 | Medium | SDE2/SDE3 onsite |
+| Coin Change | 322 | Medium | SDE1/SDE2 warmup |
+| Coin Change II (count ways) | 518 | Medium | SDE2 phone screen |
+| Decode Ways | 91 | Medium | SDE2 OA / phone |
+| Unique Paths II (obstacles grid) | 63 | Medium | SDE1 R1 |
+| Minimum Difficulty of a Job Schedule (interval DP) | 1335 | Hard | SDE3 Bar Raiser 2025 |
+| Palindrome Partitioning II (min cuts DP) | 132 | Hard | SDE2 onsite 2025 |
+| Jump Game III (BFS/DFS reachability) | 1306 | Medium | SDE2 2025 prep |
 
 ---
 
@@ -133,6 +157,10 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | 2D matrix problem with Priority Queue (Bar Raiser) | — | Hard | SDE2 Bar Raiser (2+×) |
 | Reorganize String | 767 | Medium | SDE1 L4 Poland + SDE3 (2+×) |
 | Minimum platforms / Meeting Rooms II | 253/2402 | Medium | SDE1/SDE2 (2+×) |
+| The Skyline Problem (heap + line sweep events) | 218 | Hard | SDE3 onsite 2025 |
+| Sliding Window Median (two heaps) | 480 | Hard | SDE2/SDE3 phone screen |
+| Smallest Range Covering Elements from K Lists | 632 | Hard | SDE3 Bar Raiser 2025 |
+| Kth Largest Element in an Array (quickselect / heap) | 215 | Medium | SDE2 phone warmup |
 
 ---
 
@@ -157,6 +185,15 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Split Array Largest Sum | 410 | Hard | SDE2 onsite |
 | Minimum Cost to Merge Sticks | 1167 | Medium | SDE2 India onsite |
 | Row with Maximum Ones | 2643 | Easy | SDE2 collection |
+| Minimum Window Substring | 76 | Hard | SDE2 onsite 2025 |
+| Permutation in String (anagram in window) | 567 | Medium | SDE1/SDE2 warmup |
+| Longest Repeating Character Replacement | 424 | Medium | SDE2 OA 2025 |
+| Max Consecutive Ones III (binary flip budget) | 1004 | Medium | SDE2 phone 2025 |
+| Container With Most Water (two pointers) | 11 | Medium | SDE1/SDE2 warmup |
+| Subarray Sum Equals K (prefix sum + HashMap) | 560 | Medium | SDE2 onsite 2025 |
+| Median of Two Sorted Arrays | 4 | Hard | SDE3 Bar Raiser |
+| 3Sum (two-pointer after sort) | 15 | Medium | SDE2 screening |
+| Longest Subarray with Sum K (sliding window) | 325 | Medium | SDE2 phone 2025 |
 
 ---
 
@@ -178,6 +215,11 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Reorganize String | 767 | Medium | SDE1 + SDE3 (2+×) |
 | Rabin-Karp / rolling hash OA | — | Medium | SDE1 OA (2+×) |
 | Convert Postfix Expression to Infix | — | Medium | SDE2 collection |
+| Longest Palindromic Substring (expand-around-center) | 5 | Medium | SDE2 onsite 2025 |
+| Palindromic Substrings (count all) | 647 | Medium | SDE2 2025 prep |
+| Longest Substring Without Repeating Characters | 3 | Medium | SDE1/SDE2 warmup |
+| Longest Common Prefix | 14 | Easy | SDE1 phone warmup |
+| Implement Trie (Prefix Tree) | 208 | Medium | SDE2 onsite 2025 |
 
 ---
 
@@ -192,6 +234,13 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | K Sorted Linked Lists Max Sum Path (heap follow-up) | — | Hard | SDE1 Bar Raiser follow-up |
 | Add Two Numbers (different sizes, negative follow-up) | 2/445 | Medium | SDE2 Bar Raiser |
 | DLL insertions + merge sort | — | Medium | SDE1 R2 |
+| Linked List Cycle Detection (Floyd's) | 141 | Easy | SDE1 phone (very common) |
+| Linked List Cycle II (find entry of cycle) | 142 | Medium | SDE2 phone |
+| Reverse Linked List | 206 | Easy | SDE1 phone warmup |
+| Reverse Nodes in K-Group | 25 | Hard | SDE2/SDE3 Bar Raiser |
+| Merge Two Sorted Linked Lists | 21 | Easy | SDE1 phone warmup |
+| Palindrome Linked List | 234 | Easy | SDE1 R1 |
+| LRU Cache (DLL + HashMap) — implementation focus | 146 | Medium | SDE2 (already in Design; worth coding separately) |
 
 ---
 
@@ -204,6 +253,12 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Missing Element in Sorted Array | 1060 | Medium | SDE2 Seattle |
 | Find Single Element in Sorted Array | 540 | Medium | SDE1 R2 |
 | IP Range Lookup (binary search on intervals) | ~981 | Medium | SDE2 Bar Raiser Bangalore |
+| Search in Rotated Sorted Array | 33 | Medium | SDE2 onsite (2+×) |
+| Find First and Last Position of Element in Sorted Array | 34 | Medium | SDE1/SDE2 warmup |
+| Koko Eating Bananas (binary search on answer) | 875 | Medium | SDE2 phone 2025 |
+| Find Peak Element | 162 | Medium | SDE2 phone screen |
+| Find Minimum in Rotated Sorted Array | 153 | Medium | SDE1 R1 |
+| Time Based Key-Value Store (binary search on timestamps) | 981 | Medium | SDE2 Bar Raiser |
 
 ---
 
@@ -228,6 +283,10 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Card Game LLD | OOP | Medium | SDE2 onsite |
 | Multi-Car Elevator System | OOP | Medium | SDE2 Bar Raiser |
 | Page Visit Sequence (rolling hash O(N)) | Rolling Hash | Hard | SDE2 onsite |
+| All O'one Data Structure (O(1) inc/dec/getMax/getMin) | DLL + HashMap | Hard | SDE3 onsite 2025 |
+| Design In-Memory File System (Trie + OOP) | Trie | Hard | SDE3 Seattle 2025 |
+| Flatten Nested List Iterator | Stack | Medium | SDE2 phone screen |
+| Time Based Key-Value Store | Binary Search + HashMap | Medium | SDE2 Bar Raiser |
 
 ---
 
@@ -240,6 +299,13 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Word Search | 79 | Medium | SDE2 onsite (2+×) |
 | Path Sum II | 113 | Medium | SDE2 collection |
 | Backtracking Medium (unnamed) | — | Med-Hard | SDE2 Bar Raiser (2+×) |
+| Combination Sum I / II | 39/40 | Medium | SDE1/SDE2 warmup |
+| Subsets I / II | 78/90 | Medium | SDE1/SDE2 warmup |
+| Palindrome Partitioning (all valid partitions) | 131 | Medium | SDE2 onsite 2025 |
+| Generate Parentheses | 22 | Medium | SDE1/SDE2 warmup |
+| Letter Combinations of a Phone Number | 17 | Medium | SDE1 phone |
+| N-Queens | 51 | Hard | SDE3 Bar Raiser |
+| Sudoku Solver | 37 | Hard | SDE2/SDE3 onsite 2025 |
 
 ---
 
@@ -253,6 +319,11 @@ compensate for a weaker coding round. LP stories are mandatory in every round �
 | Trapping Rain Water | 42 | Hard | SDE2 onsite (2+×) |
 | Implement Queue Using Stack | 232 | Easy | SDE2 (suspicious round) |
 | Convert Postfix to Infix | — | Medium | SDE2 collection |
+| Largest Rectangle in Histogram (monotonic stack) | 84 | Hard | SDE2/SDE3 onsite 2025 |
+| Basic Calculator II (stack-based expression) | 227 | Medium | SDE2 phone screen |
+| Next Greater Element I / II | 496/503 | Medium | SDE2 2025 prep |
+| Daily Temperatures (monotonic stack) | 739 | Medium | SDE2 phone 2025 |
+| Valid Parentheses | 20 | Easy | SDE1 warmup |
 
 ---
 
@@ -276,20 +347,26 @@ Both OA problems always appear; candidates who solve 1.5/2 (partial solution on 
 ## Study Priority Order
 
 **Phase 1 — Must-solve before interview:**
-- Graph: BFS (LC 200, 994, 127, 841), Topological Sort (LC 210), Dijkstra (LC 743)
-- Tree: DFS post-order (LC 124, 337, 2385), BFS level-order (LC 103, 199, 1161)
+- Graph: BFS (LC 200, 994, 127, 841), Topological Sort (LC 210), Dijkstra (LC 743, 787), Union-Find (LC 684)
+- Tree: DFS post-order (LC 124, 337, 2385), serialize (LC 297), BFS level-order (LC 103, 199, 1161)
+- Linked List: Cycle detection (LC 141/142), Reverse (LC 206), Merge sorted (LC 21)
 - Design LLD: Locker System, Unix Find, LRU Cache, Task Scheduler
-- String: Word Break (LC 139/140), 3-page sequence (LC 1152), String formatter
+- String: Word Break (LC 139/140), 3-page sequence (LC 1152), Min Window Substring (LC 76)
 
 **Phase 2 — High yield for SDE2:**
-- DP: House Robber (LC 198), Frog Jump (LC 403), Split Array (LC 410)
-- Intervals: Merge Intervals (LC 56), Meeting Rooms (LC 253), Capacity to Ship (LC 1011)
-- Heap: Top K stream (LC 460-style), LFU Cache (LC 460), Merge N Lists (LC 23)
-- Graph Hard: Making Large Island (LC 827), Word Ladder II (LC 126), Find All People (LC 2092)
+- DP: House Robber (LC 198), LIS/LCS/Edit Distance (LC 300/1143/72), Coin Change (LC 322/518), Frog Jump (LC 403)
+- Intervals: Merge Intervals (LC 56), Meeting Rooms (LC 253), Non-overlapping (LC 435)
+- Heap: Top K stream, LFU Cache (LC 460), Merge N Lists (LC 23), Skyline (LC 218)
+- Arrays: Subarray Sum K (LC 560), Sliding Window (LC 76/424/567), Prefix sum patterns
+- Binary Search: Rotated array (LC 33), search-on-answer (LC 410/875/1011)
+- Stack: Monotonic (LC 84, 739), Expression (LC 227), Min Stack (LC 155)
+- Backtracking: LC 39/78/131 warmups; N-Queens (LC 51) for Bar Raiser
 
 **Phase 3 — Bar Raiser prep:**
 - Word Break II (LC 140) — appears in nearly every Bar Raiser report
 - Integer to Roman (LC 12) — appeared in 2 separate Bar Raiser rounds
+- Median of Two Sorted Arrays (LC 4) — SDE3 Bar Raiser level
+- Smallest Range from K Lists (LC 632) — heap Hard
 - 2D matrix + priority queue (unnamed, Hard)
 - K sorted linked lists max sum path (heap follow-up)
 
