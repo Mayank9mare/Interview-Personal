@@ -72,6 +72,11 @@ The local GCC is **MinGW GCC 6.3.0 on Windows**, which only supports up to **C++
   library-management/       Maven project — Book/User/BorrowRecord models, LibraryService (per-book locks, deadlock-safe multi-borrow)
   airport-runway/           Maven project — Runway/Flight/RunwayBooking models, RunwayBookingService (per-runway locks, safety-gap overlap detection)
 
+/razorpay/                  ← Razorpay-specific LLD problems (Java)
+  search-engine/            SearchEngine.java
+  rate-limiter/             RateLimiter.java
+  logger/                   LoggerSystem.java
+
 /<other-lld-folders>/       ← LLD problems (Java), one folder per problem
 
 SystemDesign.md             ← System design reference notes
@@ -378,6 +383,41 @@ Real Amazon OA problems that appear repeatedly — solve these cold before the i
   2. Sort + merge overlapping busy intervals.
   3. Gaps between merged intervals that are ≥ `minDurationMinutes` are returned as free slots.
 - Complexity: O(n log n) `getAvailableSlots` (sort n bookings), O(n) `bookRunway` overlap scan.
+
+### Razorpay — Interview Round Structure
+- Typical loop: Machine Coding (90 min) → HLD (60 min) → Hiring Manager (45–60 min).
+- **No DSA round** in most reports — machine coding + HLD carry the most weight.
+- Machine coding: 90 min in online IDE; runnable code expected; graded on SOLID, modularity, extensibility.
+- Common rejection reasons: code not modular, not extensible (no Strategy/interfaces), missing validations/edge cases.
+- HLD: Razorpay domain-heavy — idempotency keys, Saga pattern, pub-sub, payment gateway design.
+- Most repeated machine coding problems: In-memory Search Engine (4+×), Splitwise (3+×, in Slice), Logger System (2×), Rate Limiter (widely cited for fintech).
+
+### Razorpay — In-Memory Search Engine
+- `invertedIndex: Map<String, Set<String>>` (word → docIds) + `tagIndex: Map<String, Set<String>>` (tag → docIds).
+- **AND semantics**: search intersects the sets of all query terms — start with first term's set, `retainAll` for each subsequent term.
+- **Strategy pattern** for result ordering (`SortingStrategy` interface): `FrequencyDescStrategy`, `DocumentSizeDescStrategy`, `AlphaByIdStrategy`. Interviewer explicitly looks for this extensibility hook.
+- `addDocument` tokenises content at insert time; `removeDocument` cleans all index entries for the doc.
+- Frequency score = count of query terms in doc text (computed at query time, not stored).
+- Follow-up: "add ordering by recency" → add `TimestampStrategy` implementing `SortingStrategy`, zero changes to `SearchEngine`.
+- Complexity: O(|content|) add, O(|content|) remove, O(candidates × |terms|) search, O(k log k) sort.
+
+### Razorpay — Rate Limiter (Sliding Window)
+- `Map<userId, Deque<Long>>`: each user has a deque of timestamps of recent requests.
+- **Lazy expiry**: on every `isAllowed()` call, purge entries `<= timestamp - windowMs` from front before counting.
+- **Per-user `ReentrantLock`** (not one global lock): different users can be served concurrently without contention.
+- `mapLock` guards the map of user locks — prevents two threads creating a lock for the same user simultaneously.
+- Why sliding window over token bucket: sliding window gives a hard guarantee (no more than N in any window interval); token bucket allows short bursts up to bucket capacity.
+- Follow-up "token bucket": store `(tokens, lastRefillTime)` per user; refill = `min(max, tokens + elapsed × rate)`.
+- Complexity: O(1) amortised `isAllowed` (each timestamp is enqueued and dequeued at most once).
+
+### Razorpay — Logger System (Chain of Responsibility)
+- `LogHandler` abstract base holds `minLevel` and `next`; `handle()` checks threshold then always forwards (fan-out).
+- **Fan-out vs short-circuit**: default is fan-out (every handler that passes the threshold fires). Short-circuit = break after first match (not implemented here; mention as follow-up).
+- Concrete handlers: `ConsoleHandler` (DEBUG+), `FileHandler` (WARN+, in-memory buffer), `AlertHandler` (ERROR+, PagerDuty sim).
+- Chain building: `console.setNext(file).setNext(alert)` — fluent API returns `next` so chaining is one line.
+- **Extensibility demo**: `alert.setNext(dbHandler)` adds a DB sink at runtime — zero changes to existing handlers.
+- Follow-up "add Slack handler": create `SlackHandler extends LogHandler` with `minLevel=ERROR`, wire it in — Open-Closed.
+- Complexity: O(k) per log call where k = chain length (typically 3–5).
 
 ## Git
 - Remote: `https://github.com/Mayank9mare/Interview-Personal.git`
